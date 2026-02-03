@@ -21,10 +21,33 @@ IOnlineSessionPtr USOSManager::GetSessionInterface() const
 
 void USOSManager::CreateLobby(int32 MaxPlayers, const FString& LobbyMap, bool bLAN)
 {
+	if (const UWorld* World = GetWorld())
+	{
+		if (World->GetNetMode() == NM_Client)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MazeUI: CreateLobby rejected on client"));
+			OnLobbyCreated.Broadcast(false);
+			return;
+		}
+	}
+
 	IOnlineSessionPtr Sessions = GetSessionInterface();
 	if (!Sessions.IsValid())
 	{
 		OnLobbyCreated.Broadcast(false);
+		return;
+	}
+
+	// If a stale session exists (e.g., client was disconnected without destroying GameSession),
+	// destroy it first then retry automatically.
+	if (Sessions->GetNamedSession(GAME_SESSION_NAME) != nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: CreateLobby found existing GameSession; destroying then retry"));
+		bPendingCreateAfterDestroy = true;
+		PendingCreateMaxPlayers = MaxPlayers;
+		PendingLobbyMap = LobbyMap;
+		bPendingCreateLAN = bLAN;
+		DestroyLobby();
 		return;
 	}
 
@@ -107,7 +130,7 @@ void USOSManager::FindLobbies(int32 MaxResults, bool bLAN)
 	SessionSearch->bIsLanQuery = bLAN;
 
 	// Steam Lobby/Presence 기반 검색에서 자주 필요한 조건
-	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 
 	FindHandle = Sessions->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(this, &USOSManager::HandleFindSessionsComplete)
@@ -162,6 +185,15 @@ void USOSManager::JoinLobbyByIndex(int32 ResultIndex)
 	if (!Sessions.IsValid() || !SessionSearch.IsValid())
 	{
 		OnLobbyJoined.Broadcast(false);
+		return;
+	}
+
+	if (Sessions->GetNamedSession(GAME_SESSION_NAME) != nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: JoinLobby found existing GameSession; destroying then retry"));
+		bPendingJoinAfterDestroy = true;
+		PendingJoinIndex = ResultIndex;
+		DestroyLobby();
 		return;
 	}
 
@@ -241,4 +273,37 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 
 	bHosting = false;
 	OnLobbyDestroyed.Broadcast(bWasSuccessful);
+
+	if (!bWasSuccessful)
+	{
+		bPendingCreateAfterDestroy = false;
+		bPendingJoinAfterDestroy = false;
+		PendingJoinIndex = -1;
+		PendingCreateMaxPlayers = 0;
+		bPendingCreateLAN = false;
+		return;
+	}
+
+	if (bPendingCreateAfterDestroy)
+	{
+		bPendingCreateAfterDestroy = false;
+		const int32 MaxPlayers = PendingCreateMaxPlayers;
+		const FString Map = PendingLobbyMap;
+		const bool bLAN = bPendingCreateLAN;
+		PendingCreateMaxPlayers = 0;
+		bPendingCreateLAN = false;
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Retrying CreateLobby after destroy"));
+		CreateLobby(MaxPlayers, Map, bLAN);
+		return;
+	}
+
+	if (bPendingJoinAfterDestroy)
+	{
+		bPendingJoinAfterDestroy = false;
+		const int32 JoinIndex = PendingJoinIndex;
+		PendingJoinIndex = -1;
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Retrying JoinLobby after destroy"));
+		JoinLobbyByIndex(JoinIndex);
+		return;
+	}
 }

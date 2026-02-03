@@ -77,4 +77,12 @@ private:
 	UPROPERTY() FString PendingLobbyMap = TEXT("/Game/Maps/Lobby"); // 기본값
 	UPROPERTY() TArray<FFoundLobbyInfo> LastFoundLobbies;
 	UPROPERTY() bool bHosting = false;
+
+	// If a stale GameSession exists (common after disconnect), we destroy first then retry.
+	UPROPERTY() bool bPendingCreateAfterDestroy = false;
+	UPROPERTY() int32 PendingCreateMaxPlayers = 0;
+	UPROPERTY() bool bPendingCreateLAN = false;
+
+	UPROPERTY() bool bPendingJoinAfterDestroy = false;
+	UPROPERTY() int32 PendingJoinIndex = -1;
 };

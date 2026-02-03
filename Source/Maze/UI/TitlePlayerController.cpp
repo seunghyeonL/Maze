@@ -5,6 +5,8 @@
 #include "TitleWidget.h"
 #include "UIFlowSubsystem.h"
 
+#include "OnlineSubsystem/SOSManager.h"
+
 #include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
@@ -171,6 +173,13 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 	if (Flow)
 	{
 		Flow->SetScreenMatch();
+	}
+
+	// Ensure local OnlineSession state is cleared, otherwise Join/Create can fail with
+	// "Session (GameSession) already exists" after a disconnect.
+	if (USOSManager* SOS = GetGameInstance() ? GetGameInstance()->GetSubsystem<USOSManager>() : nullptr)
+	{
+		SOS->DestroyLobby();
 	}
 
 	RefreshUI();

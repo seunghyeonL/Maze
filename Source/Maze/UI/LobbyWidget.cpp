@@ -8,7 +8,9 @@
 #include "Components/Button.h"
 #include "Components/ListView.h"
 #include "Engine/World.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 
 void ULobbyWidget::NativeConstruct()
 {
@@ -125,7 +127,7 @@ void ULobbyWidget::UpdateRoleVisibility()
 
 	if (ReadyButton)
 	{
-		ReadyButton->SetVisibility(bIsHost ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+		ReadyButton->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 
@@ -171,16 +173,10 @@ void ULobbyWidget::HandleGameStartClicked()
 		return;
 	}
 
-	const AMazeLobbyPlayerState* HostPlayerState = GetOwningPlayerState<AMazeLobbyPlayerState>();
 	for (APlayerState* PlayerState : GameState->PlayerArray)
 	{
 		const AMazeLobbyPlayerState* LobbyPlayerState = Cast<AMazeLobbyPlayerState>(PlayerState);
 		if (!LobbyPlayerState)
-		{
-			continue;
-		}
-
-		if (HostPlayerState && LobbyPlayerState == HostPlayerState)
 		{
 			continue;
 		}
@@ -200,18 +196,56 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
 
-	if (SOSManager)
+	static const FString TitleLevelUrl = TEXT("/Game/Levels/TitleLevel");
+
+	UWorld* World = GetWorld();
+	const bool bHost = IsLobbyHost();
+	if (bHost && World && World->GetNetMode() != NM_Client)
 	{
-		SOSManager->DestroyLobby();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on ExitToMatching"));
+		if (World->GetAuthGameMode())
+		{
+			for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+			{
+				APlayerController* PC = It->Get();
+				if (!PC || PC->IsLocalController())
+				{
+					continue;
+				}
+
+				// Force remote clients to disconnect and return to TitleLevel.
+				PC->ClientTravel(TitleLevelUrl, ETravelType::TRAVEL_Absolute);
+			}
+		}
 	}
 
 	if (UIFlowSubsystem)
 	{
 		UIFlowSubsystem->SetScreenMatch();
+	}
+
+	if (bHost && World && World->GetNetMode() != NM_Client)
+	{
+		if (SOSManager)
+		{
+			SOSManager->DestroyLobby();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on ExitToMatching"));
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Host returning to TitleLevel as Standalone"));
+		UGameplayStatics::OpenLevel(this, FName(*TitleLevelUrl), true);
+		return;
+	}
+
+	// Client: actually disconnect by reopening TitleLevel locally.
+	// Without this, the client may remain connected to the listen server and keep its GameSession around.
+	if (!bHost && World && World->GetNetMode() == NM_Client)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Client returning to TitleLevel as Standalone"));
+		UGameplayStatics::OpenLevel(this, FName(*TitleLevelUrl), true);
+		return;
 	}
 
 	RemoveFromParent();
