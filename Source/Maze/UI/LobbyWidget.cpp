@@ -1,0 +1,289 @@
+﻿#include "LobbyWidget.h"
+
+#include "LobbyPlayerEntryItem.h"
+#include "MazeLobbyPlayerState.h"
+#include "OnlineSubsystem/SOSManager.h"
+#include "UIFlowSubsystem.h"
+
+#include "Components/Button.h"
+#include "Components/ListView.h"
+#include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
+
+void ULobbyWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	SetIsFocusable(true);
+	CacheSubsystems();
+	UpdateRoleVisibility();
+
+	if (GameStartButton)
+	{
+		GameStartButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleGameStartClicked);
+		GameStartButton->OnClicked.AddDynamic(this, &ULobbyWidget::HandleGameStartClicked);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStartButton missing"));
+	}
+
+	if (ReadyButton)
+	{
+		ReadyButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleReadyClicked);
+		ReadyButton->OnClicked.AddDynamic(this, &ULobbyWidget::HandleReadyClicked);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: ReadyButton missing"));
+	}
+
+	if (ExitToMatchingButton)
+	{
+		ExitToMatchingButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleExitToMatchingClicked);
+		ExitToMatchingButton->OnClicked.AddDynamic(this, &ULobbyWidget::HandleExitToMatchingClicked);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: ExitToMatchingButton missing"));
+	}
+
+	if (!PlayerList)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: PlayerList missing"));
+	}
+
+	RefreshPlayerList();
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(RefreshTimerHandle, this, &ULobbyWidget::RefreshPlayerList, 1.0f, true);
+	}
+
+	SetKeyboardFocus();
+}
+
+void ULobbyWidget::NativeDestruct()
+{
+	if (GameStartButton)
+	{
+		GameStartButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleGameStartClicked);
+	}
+
+	if (ReadyButton)
+	{
+		ReadyButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleReadyClicked);
+	}
+
+	if (ExitToMatchingButton)
+	{
+		ExitToMatchingButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleExitToMatchingClicked);
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+	}
+
+	UnbindPlayerStates();
+
+	Super::NativeDestruct();
+}
+
+void ULobbyWidget::CacheSubsystems()
+{
+	if (GetGameInstance())
+	{
+		SOSManager = GetGameInstance()->GetSubsystem<USOSManager>();
+		UIFlowSubsystem = GetGameInstance()->GetSubsystem<UUIFlowSubsystem>();
+	}
+}
+
+bool ULobbyWidget::IsLobbyHost() const
+{
+	if (UIFlowSubsystem)
+	{
+		return UIFlowSubsystem->IsLobbyHost();
+	}
+
+	if (const UWorld* World = GetWorld())
+	{
+		return World->GetNetMode() != NM_Client;
+	}
+
+	return false;
+}
+
+void ULobbyWidget::UpdateRoleVisibility()
+{
+	const bool bIsHost = IsLobbyHost();
+
+	if (GameStartButton)
+	{
+		GameStartButton->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+
+	if (ReadyButton)
+	{
+		ReadyButton->SetVisibility(bIsHost ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+	}
+}
+
+void ULobbyWidget::HandleReadyClicked()
+{
+	AMazeLobbyPlayerState* LobbyPlayerState = GetOwningPlayerState<AMazeLobbyPlayerState>();
+	if (!LobbyPlayerState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: Ready clicked without lobby player state"));
+		return;
+	}
+
+	const bool bNewReady = !LobbyPlayerState->IsReady();
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Ready clicked -> %s"), bNewReady ? TEXT("Ready") : TEXT("NotReady"));
+	LobbyPlayerState->RequestSetReady(bNewReady);
+}
+
+void ULobbyWidget::HandleGameStartClicked()
+{
+	if (!IsLobbyHost())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart clicked by non-host"));
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart failed (no world)"));
+		return;
+	}
+
+	if (World->GetNetMode() == NM_Client)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart rejected on client"));
+		return;
+	}
+
+	const AGameStateBase* GameState = World->GetGameState();
+	if (!GameState)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart failed (no GameState)"));
+		return;
+	}
+
+	const AMazeLobbyPlayerState* HostPlayerState = GetOwningPlayerState<AMazeLobbyPlayerState>();
+	for (APlayerState* PlayerState : GameState->PlayerArray)
+	{
+		const AMazeLobbyPlayerState* LobbyPlayerState = Cast<AMazeLobbyPlayerState>(PlayerState);
+		if (!LobbyPlayerState)
+		{
+			continue;
+		}
+
+		if (HostPlayerState && LobbyPlayerState == HostPlayerState)
+		{
+			continue;
+		}
+
+		if (!LobbyPlayerState->IsReady())
+		{
+			UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart blocked (not all players ready)"));
+			return;
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel"));
+	World->ServerTravel(TEXT("/Game/Levels/MazeLevel"));
+}
+
+void ULobbyWidget::HandleExitToMatchingClicked()
+{
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
+
+	if (SOSManager)
+	{
+		SOSManager->DestroyLobby();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on ExitToMatching"));
+	}
+
+	if (UIFlowSubsystem)
+	{
+		UIFlowSubsystem->SetScreenMatch();
+	}
+
+	RemoveFromParent();
+}
+
+void ULobbyWidget::HandleReadyChanged(AMazeLobbyPlayerState* PlayerState, bool bIsReady)
+{
+	(void)PlayerState;
+	(void)bIsReady;
+	RefreshPlayerList();
+}
+
+void ULobbyWidget::RefreshPlayerList()
+{
+	if (!PlayerList)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	const AGameStateBase* GameState = World->GetGameState();
+	if (!GameState)
+	{
+		return;
+	}
+
+	PlayerList->ClearListItems();
+	PlayerItems.Reset();
+	UnbindPlayerStates();
+
+	for (APlayerState* PlayerState : GameState->PlayerArray)
+	{
+		AMazeLobbyPlayerState* LobbyPlayerState = Cast<AMazeLobbyPlayerState>(PlayerState);
+		if (!LobbyPlayerState)
+		{
+			continue;
+		}
+
+		ULobbyPlayerEntryItem* NewItem = NewObject<ULobbyPlayerEntryItem>(this);
+		NewItem->Init(LobbyPlayerState->GetPlayerName(), LobbyPlayerState->IsReady());
+		PlayerItems.Add(NewItem);
+		PlayerList->AddItem(NewItem);
+		BindPlayerStateReady(LobbyPlayerState);
+	}
+}
+
+void ULobbyWidget::BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState)
+{
+	if (!PlayerState)
+	{
+		return;
+	}
+
+	PlayerState->OnReadyChanged.RemoveDynamic(this, &ULobbyWidget::HandleReadyChanged);
+	PlayerState->OnReadyChanged.AddDynamic(this, &ULobbyWidget::HandleReadyChanged);
+	BoundPlayerStates.AddUnique(PlayerState);
+}
+
+void ULobbyWidget::UnbindPlayerStates()
+{
+	for (const TWeakObjectPtr<AMazeLobbyPlayerState>& PlayerState : BoundPlayerStates)
+	{
+		if (PlayerState.IsValid())
+		{
+			PlayerState->OnReadyChanged.RemoveDynamic(this, &ULobbyWidget::HandleReadyChanged);
+		}
+	}
+
+	BoundPlayerStates.Reset();
+}

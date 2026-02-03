@@ -7,8 +7,9 @@ public class Maze : ModuleRules
 	public Maze(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(new string[] { "Maze" });
+
+		PrivateIncludePaths.AddRange(new string[] { "Maze" });
+		// PublicIncludePaths.AddRange(new string[] { "Maze" });
 	
 		PublicDependencyModuleNames.AddRange(new string[]
 		{

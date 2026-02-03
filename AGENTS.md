@@ -5,10 +5,10 @@
 - Only modify files under .
 
 ## Editing scope
-- Primary edit location: ./Source/test/** (C++ code)
+- Primary edit location: ./Source/Maze/** (C++ code)
 - Allowed when required for compilation:
-  - ./Source/test/test.Build.cs
-  - ./test.uproject (only if module registration is missing)
+  - ./Source/Maze/Maze.Build.cs
+  - ./Maze.uproject (only if module registration is missing)
   - ./Config/** (rare; only if build requires it)
 - Do not modify anything outside . without asking.
 

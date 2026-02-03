@@ -25,3 +25,7 @@ Saved/
 
 # DotSettings
 *.DotSettings.user
+
+.sisyphus/
+Docs/
+AGENTS.md

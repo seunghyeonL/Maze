@@ -76,10 +76,19 @@ void USOSManager::HandleCreateSessionComplete(FName SessionName, bool bWasSucces
 
 	if (!bWasSuccessful || !GetWorld()) return;
 
-	// 로비/게임맵 이동: listen 서버로 열기
-	// LobbyMap 예: /Game/Maps/Lobby
-	const FString TravelURL = FString::Printf(TEXT("%s?listen"), *PendingLobbyMap);
-	GetWorld()->ServerTravel(TravelURL);
+	// NOTE: No separate LobbyLevel. Keep the host on TitleLevel and switch UI only.
+	// If we are not already a listen server (e.g., standalone host), reopen the current map as listen once.
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	if (World->GetNetMode() == NM_Standalone)
+	{
+		const FString TravelURL = FString::Printf(TEXT("%s?listen"), *PendingLobbyMap);
+		World->ServerTravel(TravelURL);
+	}
 }
 
 void USOSManager::FindLobbies(int32 MaxResults, bool bLAN)
