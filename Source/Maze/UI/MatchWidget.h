@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
@@ -55,13 +55,13 @@ protected:
 	void HandleLobbyItemClicked(UObject* Item);
 
 	UFUNCTION()
-	void HandleLobbyCreated(bool bSuccess);
+	void HandleSessionCreated(bool bSuccess);
 
 	UFUNCTION()
-	void HandleLobbiesFound(bool bSuccess, const TArray<FFoundLobbyInfo>& Results);
+	void HandleSessionsFound(bool bSuccess, const TArray<FFoundSessionInfo>& Results);
 
 	UFUNCTION()
-	void HandleLobbyJoined(bool bSuccess);
+	void HandleSessionJoined(bool bSuccess);
 
 private:
 	void CacheSubsystems();

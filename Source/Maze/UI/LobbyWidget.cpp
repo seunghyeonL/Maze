@@ -1,4 +1,4 @@
-﻿#include "LobbyWidget.h"
+#include "LobbyWidget.h"
 
 #include "LobbyPlayerEntryItem.h"
 #include "MazeLobbyPlayerState.h"
@@ -227,7 +227,7 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 	{
 		if (SOSManager)
 		{
-			SOSManager->DestroyLobby();
+			SOSManager->DestroySession();
 		}
 		else
 		{

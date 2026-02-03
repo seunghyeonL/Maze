@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
@@ -11,11 +11,11 @@ class MAZE_API ULobbySearchResultItem : public UObject
 	GENERATED_BODY()
 
 public:
-	void Init(const FFoundLobbyInfo& InInfo)
+	void Init(const FFoundSessionInfo& InInfo)
 	{
-		LobbyInfo = InInfo;
+		SessionInfo = InInfo;
 	}
 
 	UPROPERTY(BlueprintReadOnly)
-	FFoundLobbyInfo LobbyInfo;
+	FFoundSessionInfo SessionInfo;
 };

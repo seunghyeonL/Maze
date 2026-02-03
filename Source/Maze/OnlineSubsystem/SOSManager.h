@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
@@ -6,10 +6,10 @@
 #include "SOSManager.generated.h"
 
 /**
- * UI에서 다루기 쉬운 “검색 결과 요약”용 구조체
+ * UI에서 다루기 쉬운 "검색 결과 요약"용 구조체
  */
 USTRUCT(BlueprintType)
-struct FFoundLobbyInfo
+struct FFoundSessionInfo
 {
 	GENERATED_BODY()
 
@@ -21,10 +21,10 @@ struct FFoundLobbyInfo
 	UPROPERTY(BlueprintReadOnly) int32 MaxPlayers = 0;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyCreatedBP, bool, bSuccess);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyDestroyedBP, bool, bSuccess);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLobbiesFoundBP, bool, bSuccess, const TArray<FFoundLobbyInfo>&, Results);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyJoinedBP, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionCreatedBP, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionDestroyedBP, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionsFoundBP, bool, bSuccess, const TArray<FFoundSessionInfo>&, Results);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionJoinedBP, bool, bSuccess);
 
 UCLASS()
 class MAZE_API USOSManager : public UGameInstanceSubsystem
@@ -33,27 +33,27 @@ class MAZE_API USOSManager : public UGameInstanceSubsystem
 
 public:
 	// ---- BP Events (UMG에서 바인딩) ----
-	UPROPERTY(BlueprintAssignable) FOnLobbyCreatedBP OnLobbyCreated;
-	UPROPERTY(BlueprintAssignable) FOnLobbiesFoundBP OnLobbiesFound;
-	UPROPERTY(BlueprintAssignable) FOnLobbyJoinedBP OnLobbyJoined;
-	UPROPERTY(BlueprintAssignable) FOnLobbyDestroyedBP OnLobbyDestroyed;
+	UPROPERTY(BlueprintAssignable) FOnSessionCreatedBP OnSessionCreated;
+	UPROPERTY(BlueprintAssignable) FOnSessionsFoundBP OnSessionsFound;
+	UPROPERTY(BlueprintAssignable) FOnSessionJoinedBP OnSessionJoined;
+	UPROPERTY(BlueprintAssignable) FOnSessionDestroyedBP OnSessionDestroyed;
 
 	// ---- Create / Find / Join / Destroy ----
-	UFUNCTION(BlueprintCallable, Category="SOS|Lobby")
-	void CreateLobby(int32 MaxPlayers, const FString& LobbyMap, bool bLAN = false);
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void CreateSession(int32 MaxPlayers, const FString& SessionMap, bool bLAN = false);
 
-	UFUNCTION(BlueprintCallable, Category="SOS|Lobby")
-	void FindLobbies(int32 MaxResults = 50, bool bLAN = false);
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void FindSessions(int32 MaxResults = 50, bool bLAN = false);
 
-	UFUNCTION(BlueprintCallable, Category="SOS|Lobby")
-	void JoinLobbyByIndex(int32 ResultIndex);
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void JoinSessionByIndex(int32 ResultIndex);
 
-	UFUNCTION(BlueprintCallable, Category="SOS|Lobby")
-	void DestroyLobby();
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void DestroySession();
 
 	// 마지막 검색 결과를 UI가 필요할 때 다시 가져가고 싶으면
-	UFUNCTION(BlueprintPure, Category="SOS|Lobby")
-	const TArray<FFoundLobbyInfo>& GetLastFoundLobbies() const { return LastFoundLobbies; }
+	UFUNCTION(BlueprintPure, Category="SOS|Session")
+	const TArray<FFoundSessionInfo>& GetLastFoundSessions() const { return LastFoundSessions; }
 
 private:
 	IOnlineSessionPtr GetSessionInterface() const;
@@ -74,8 +74,8 @@ private:
 
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
-	UPROPERTY() FString PendingLobbyMap = TEXT("/Game/Maps/Lobby"); // 기본값
-	UPROPERTY() TArray<FFoundLobbyInfo> LastFoundLobbies;
+	UPROPERTY() FString PendingSessionMap = TEXT("/Game/Maps/Lobby"); // 기본값
+	UPROPERTY() TArray<FFoundSessionInfo> LastFoundSessions;
 	UPROPERTY() bool bHosting = false;
 
 	// If a stale GameSession exists (common after disconnect), we destroy first then retry.

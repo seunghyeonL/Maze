@@ -179,7 +179,7 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 	// "Session (GameSession) already exists" after a disconnect.
 	if (USOSManager* SOS = GetGameInstance() ? GetGameInstance()->GetSubsystem<USOSManager>() : nullptr)
 	{
-		SOS->DestroyLobby();
+		SOS->DestroySession();
 	}
 
 	RefreshUI();

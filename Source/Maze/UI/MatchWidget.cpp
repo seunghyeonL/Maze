@@ -1,4 +1,4 @@
-﻿#include "MatchWidget.h"
+#include "MatchWidget.h"
 
 #include "LobbySearchResultItem.h"
 #include "UIFlowSubsystem.h"
@@ -57,14 +57,14 @@ void UMatchWidget::NativeConstruct()
 
 	if (SOSManager)
 	{
-		SOSManager->OnLobbyCreated.RemoveDynamic(this, &UMatchWidget::HandleLobbyCreated);
-		SOSManager->OnLobbyCreated.AddDynamic(this, &UMatchWidget::HandleLobbyCreated);
+		SOSManager->OnSessionCreated.RemoveDynamic(this, &UMatchWidget::HandleSessionCreated);
+		SOSManager->OnSessionCreated.AddDynamic(this, &UMatchWidget::HandleSessionCreated);
 
-		SOSManager->OnLobbiesFound.RemoveDynamic(this, &UMatchWidget::HandleLobbiesFound);
-		SOSManager->OnLobbiesFound.AddDynamic(this, &UMatchWidget::HandleLobbiesFound);
+		SOSManager->OnSessionsFound.RemoveDynamic(this, &UMatchWidget::HandleSessionsFound);
+		SOSManager->OnSessionsFound.AddDynamic(this, &UMatchWidget::HandleSessionsFound);
 
-		SOSManager->OnLobbyJoined.RemoveDynamic(this, &UMatchWidget::HandleLobbyJoined);
-		SOSManager->OnLobbyJoined.AddDynamic(this, &UMatchWidget::HandleLobbyJoined);
+		SOSManager->OnSessionJoined.RemoveDynamic(this, &UMatchWidget::HandleSessionJoined);
+		SOSManager->OnSessionJoined.AddDynamic(this, &UMatchWidget::HandleSessionJoined);
 	}
 	else
 	{
@@ -98,9 +98,9 @@ void UMatchWidget::NativeDestruct()
 
 	if (SOSManager)
 	{
-		SOSManager->OnLobbyCreated.RemoveDynamic(this, &UMatchWidget::HandleLobbyCreated);
-		SOSManager->OnLobbiesFound.RemoveDynamic(this, &UMatchWidget::HandleLobbiesFound);
-		SOSManager->OnLobbyJoined.RemoveDynamic(this, &UMatchWidget::HandleLobbyJoined);
+		SOSManager->OnSessionCreated.RemoveDynamic(this, &UMatchWidget::HandleSessionCreated);
+		SOSManager->OnSessionsFound.RemoveDynamic(this, &UMatchWidget::HandleSessionsFound);
+		SOSManager->OnSessionJoined.RemoveDynamic(this, &UMatchWidget::HandleSessionJoined);
 	}
 
 	Super::NativeDestruct();
@@ -117,27 +117,27 @@ void UMatchWidget::CacheSubsystems()
 
 void UMatchWidget::HandleCreateLobbyClicked()
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match CreateLobby clicked"));
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match CreateSession clicked"));
 	if (SOSManager)
 	{
-		SOSManager->CreateLobby(4, TEXT("/Game/Levels/TitleLevel"), true);
+		SOSManager->CreateSession(4, TEXT("/Game/Levels/TitleLevel"), true);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on CreateLobby"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on CreateSession"));
 	}
 }
 
 void UMatchWidget::HandleFindLobbyClicked()
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match FindLobby clicked"));
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match FindSessions clicked"));
 	if (SOSManager)
 	{
-		SOSManager->FindLobbies(50, true);
+		SOSManager->FindSessions(50, true);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on FindLobbies"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on FindSessions"));
 	}
 }
 
@@ -156,24 +156,24 @@ void UMatchWidget::HandleLobbyItemClicked(UObject* Item)
 	const ULobbySearchResultItem* ResultItem = Cast<ULobbySearchResultItem>(Item);
 	if (!ResultItem)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeUI: Lobby item cast failed"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: Session item cast failed"));
 		return;
 	}
 
 	if (SOSManager)
 	{
-		UE_LOG(LogTemp, Log, TEXT("MazeUI: Join lobby index %d"), ResultItem->LobbyInfo.Index);
-		SOSManager->JoinLobbyByIndex(ResultItem->LobbyInfo.Index);
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Join session index %d"), ResultItem->SessionInfo.Index);
+		SOSManager->JoinSessionByIndex(ResultItem->SessionInfo.Index);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on JoinLobby"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing on JoinSession"));
 	}
 }
 
-void UMatchWidget::HandleLobbyCreated(bool bSuccess)
+void UMatchWidget::HandleSessionCreated(bool bSuccess)
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby created %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session created %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
 	if (bSuccess && UIFlowSubsystem)
 	{
 		UIFlowSubsystem->SetScreenLobby(true);
@@ -181,9 +181,9 @@ void UMatchWidget::HandleLobbyCreated(bool bSuccess)
 	}
 }
 
-void UMatchWidget::HandleLobbiesFound(bool bSuccess, const TArray<FFoundLobbyInfo>& Results)
+void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSessionInfo>& Results)
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobbies found %s (%d)"), bSuccess ? TEXT("Success") : TEXT("Failure"), Results.Num());
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Sessions found %s (%d)"), bSuccess ? TEXT("Success") : TEXT("Failure"), Results.Num());
 
 	if (!LobbyList)
 	{
@@ -199,7 +199,7 @@ void UMatchWidget::HandleLobbiesFound(bool bSuccess, const TArray<FFoundLobbyInf
 		return;
 	}
 
-	for (const FFoundLobbyInfo& Result : Results)
+	for (const FFoundSessionInfo& Result : Results)
 	{
 		ULobbySearchResultItem* NewItem = NewObject<ULobbySearchResultItem>(this);
 		NewItem->Init(Result);
@@ -208,9 +208,9 @@ void UMatchWidget::HandleLobbiesFound(bool bSuccess, const TArray<FFoundLobbyInf
 	}
 }
 
-void UMatchWidget::HandleLobbyJoined(bool bSuccess)
+void UMatchWidget::HandleSessionJoined(bool bSuccess)
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby joined %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session joined %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
 	if (bSuccess && UIFlowSubsystem)
 	{
 		UIFlowSubsystem->SetScreenLobby(false);
