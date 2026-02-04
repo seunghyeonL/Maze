@@ -21,7 +21,7 @@ void ATitleGameMode::PreLogin(const FString& Options, const FString& Address, co
 			{
 				UE_LOG(LogTemp, Log, TEXT("MazeUI: CreateSession rejected on client"));
 				ErrorMessage = TEXT("Server is full");
-				OnLoginFailed.Broadcast(FText::FromString("접속 실패"), FText::FromString("인원 초과"));
+				// OnLoginFailed.Broadcast(FText::FromString("접속 실패"), FText::FromString("인원 초과"));
 			}
 		}
 	}

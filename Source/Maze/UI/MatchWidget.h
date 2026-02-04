@@ -83,4 +83,9 @@ private:
 	/** 알림 모달 헬퍼 */
 	UFUNCTION()
 	void ShowAlert(const FText& Title, const FText& Message);
+
+	/** Pending error 체크 (지연 호출용) */
+	void CheckPendingError();
+
+	FTimerHandle PendingErrorTimerHandle;
 };

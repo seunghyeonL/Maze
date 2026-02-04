@@ -166,12 +166,32 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 {
 	(void)World;
 	(void)NetDriver;
-	(void)FailureType;
-	(void)ErrorString;
+
+	UE_LOG(LogTemp, Warning, TEXT("MazeUI: NetworkFailure - Type: %d, Error: %s"), 
+		static_cast<int32>(FailureType), *ErrorString);
 
 	UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr;
 	if (Flow)
 	{
+		// PreLogin 거부 메시지나 기타 에러를 pending error로 저장
+		FText ErrorMessage;
+		if (ErrorString.Contains(TEXT("full")) || ErrorString.Contains(TEXT("Server is full")))
+		{
+			ErrorMessage = FText::FromString(TEXT("방이 가득 찼습니다."));
+		}
+		else if (!ErrorString.IsEmpty())
+		{
+			ErrorMessage = FText::Format(
+				FText::FromString(TEXT("연결 실패: {0}")),
+				FText::FromString(ErrorString)
+			);
+		}
+		else
+		{
+			ErrorMessage = FText::FromString(TEXT("서버와의 연결이 끊어졌습니다."));
+		}
+
+		Flow->SetPendingError(ErrorMessage);
 		Flow->SetScreenMatch();
 	}
 

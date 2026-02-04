@@ -74,10 +74,25 @@ void UMatchWidget::NativeConstruct()
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing"));
 	}
 	
-	if (auto* TitleGameMode = Cast<ATitleGameMode>(GetWorld()->GetAuthGameMode()))
+	// if (auto* TitleGameMode = Cast<ATitleGameMode>(GetWorld()->GetAuthGameMode()))
+	// {
+	// 	TitleGameMode->OnLoginFailed.RemoveDynamic(this, &UMatchWidget::ShowAlert);
+	// 	TitleGameMode->OnLoginFailed.AddDynamic(this, &UMatchWidget::ShowAlert);
+	// }
+
+	// Pending error 체크를 지연 호출 (레벨 전환 후 위젯 재생성 시 모달이 사라지는 문제 방지)
+	if (UIFlowSubsystem && UIFlowSubsystem->HasPendingError())
 	{
-		TitleGameMode->OnLoginFailed.RemoveDynamic(this, &UMatchWidget::ShowAlert);
-		TitleGameMode->OnLoginFailed.AddDynamic(this, &UMatchWidget::ShowAlert);
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().SetTimer(
+				PendingErrorTimerHandle,
+				this,
+				&UMatchWidget::CheckPendingError,
+				0.5f,  // 0.5초 딜레이
+				false
+			);
+		}
 	}
 
 	SetKeyboardFocus();
@@ -111,8 +126,12 @@ void UMatchWidget::NativeDestruct()
 		SOSManager->OnSessionsFound.RemoveDynamic(this, &UMatchWidget::HandleSessionsFound);
 		SOSManager->OnSessionJoined.RemoveDynamic(this, &UMatchWidget::HandleSessionJoined);
 	}
-	
-	// if (auto TitleGameMode = Cast<ATitle>(GetWorld()->GetAuthGameMode()))
+
+	// 타이머 정리
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(PendingErrorTimerHandle);
+	}
 
 	Super::NativeDestruct();
 }
@@ -276,5 +295,14 @@ void UMatchWidget::HandleSessionJoined(bool bSuccess)
 			FText::FromString(TEXT("오류")),
 			FText::FromString(TEXT("방 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))
 		);
+	}
+}
+
+void UMatchWidget::CheckPendingError()
+{
+	if (UIFlowSubsystem && UIFlowSubsystem->HasPendingError())
+	{
+		const FText ErrorMessage = UIFlowSubsystem->ConsumePendingError();
+		ShowAlert(FText::FromString(TEXT("연결 실패")), ErrorMessage);
 	}
 }
