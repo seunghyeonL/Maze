@@ -33,10 +33,10 @@ class MAZE_API USOSManager : public UGameInstanceSubsystem
 
 public:
 	// ---- BP Events (UMG에서 바인딩) ----
-	UPROPERTY(BlueprintAssignable) FOnSessionCreatedBP OnSessionCreated;
-	UPROPERTY(BlueprintAssignable) FOnSessionsFoundBP OnSessionsFound;
-	UPROPERTY(BlueprintAssignable) FOnSessionJoinedBP OnSessionJoined;
-	UPROPERTY(BlueprintAssignable) FOnSessionDestroyedBP OnSessionDestroyed;
+	UPROPERTY(BlueprintAssignable) mutable FOnSessionCreatedBP OnSessionCreated;
+	UPROPERTY(BlueprintAssignable) mutable FOnSessionsFoundBP OnSessionsFound;
+	UPROPERTY(BlueprintAssignable) mutable FOnSessionJoinedBP OnSessionJoined;
+	UPROPERTY(BlueprintAssignable) mutable FOnSessionDestroyedBP OnSessionDestroyed;
 
 	// ---- Create / Find / Join / Destroy ----
 	UFUNCTION(BlueprintCallable, Category="SOS|Session")

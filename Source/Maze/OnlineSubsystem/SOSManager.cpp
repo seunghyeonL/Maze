@@ -123,6 +123,13 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 		return;
 	}
 
+	// 이미 검색 중이면 무시
+	if (FindHandle.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: FindSessions already in progress, ignoring"));
+		return;
+	}
+
 	LastFoundSessions.Reset();
 
 	SessionSearch = MakeShared<FOnlineSessionSearch>();
@@ -152,6 +159,7 @@ void USOSManager::HandleFindSessionsComplete(bool bWasSuccessful)
 	{
 		Sessions->ClearOnFindSessionsCompleteDelegate_Handle(FindHandle);
 	}
+	FindHandle.Reset();
 
 	if (!bWasSuccessful || !SessionSearch.IsValid())
 	{

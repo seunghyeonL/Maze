@@ -2,10 +2,13 @@
 
 #include "LobbySearchResultItem.h"
 #include "UIFlowSubsystem.h"
+#include "LoadingOverlayWidget.h"
+#include "CommonModalWidget.h"
 #include "OnlineSubsystem/SOSManager.h"
 
 #include "Components/Button.h"
 #include "Components/ListView.h"
+#include "GameMode/TitleGameMode.h"
 
 void UMatchWidget::NativeConstruct()
 {
@@ -70,6 +73,12 @@ void UMatchWidget::NativeConstruct()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SOSManager missing"));
 	}
+	
+	if (auto* TitleGameMode = Cast<ATitleGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		TitleGameMode->OnLoginFailed.RemoveDynamic(this, &UMatchWidget::ShowAlert);
+		TitleGameMode->OnLoginFailed.AddDynamic(this, &UMatchWidget::ShowAlert);
+	}
 
 	SetKeyboardFocus();
 }
@@ -102,6 +111,8 @@ void UMatchWidget::NativeDestruct()
 		SOSManager->OnSessionsFound.RemoveDynamic(this, &UMatchWidget::HandleSessionsFound);
 		SOSManager->OnSessionJoined.RemoveDynamic(this, &UMatchWidget::HandleSessionJoined);
 	}
+	
+	// if (auto TitleGameMode = Cast<ATitle>(GetWorld()->GetAuthGameMode()))
 
 	Super::NativeDestruct();
 }
@@ -115,12 +126,37 @@ void UMatchWidget::CacheSubsystems()
 	}
 }
 
+void UMatchWidget::ShowLoading(const FText& Message)
+{
+	if (LoadingOverlay)
+	{
+		LoadingOverlay->Show(Message);
+	}
+}
+
+void UMatchWidget::HideLoading()
+{
+	if (LoadingOverlay)
+	{
+		LoadingOverlay->Hide();
+	}
+}
+
+void UMatchWidget::ShowAlert(const FText& Title, const FText& Message)
+{
+	if (AlertModal)
+	{
+		AlertModal->ShowAlert(Title, Message);
+	}
+}
+
 void UMatchWidget::HandleCreateLobbyClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match CreateSession clicked"));
 	if (SOSManager)
 	{
-		SOSManager->CreateSession(4, TEXT("/Game/Levels/TitleLevel"), true);
+		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
+		SOSManager->CreateSession(2, TEXT("/Game/Levels/TitleLevel"), true);
 	}
 	else
 	{
@@ -133,6 +169,7 @@ void UMatchWidget::HandleFindLobbyClicked()
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match FindSessions clicked"));
 	if (SOSManager)
 	{
+		ShowLoading(FText::FromString(TEXT("방 검색 중...")));
 		SOSManager->FindSessions(50, true);
 	}
 	else
@@ -163,6 +200,7 @@ void UMatchWidget::HandleLobbyItemClicked(UObject* Item)
 	if (SOSManager)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeUI: Join session index %d"), ResultItem->SessionInfo.Index);
+		ShowLoading(FText::FromString(TEXT("방 참가 중...")));
 		SOSManager->JoinSessionByIndex(ResultItem->SessionInfo.Index);
 	}
 	else
@@ -173,16 +211,26 @@ void UMatchWidget::HandleLobbyItemClicked(UObject* Item)
 
 void UMatchWidget::HandleSessionCreated(bool bSuccess)
 {
+	HideLoading();
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session created %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
+
 	if (bSuccess && UIFlowSubsystem)
 	{
 		UIFlowSubsystem->SetScreenLobby(true);
 		RemoveFromParent();
 	}
+	else if (!bSuccess)
+	{
+		ShowAlert(
+			FText::FromString(TEXT("오류")),
+			FText::FromString(TEXT("세션 생성에 실패했습니다."))
+		);
+	}
 }
 
 void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSessionInfo>& Results)
 {
+	HideLoading();
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Sessions found %s (%d)"), bSuccess ? TEXT("Success") : TEXT("Failure"), Results.Num());
 
 	if (!LobbyList)
@@ -196,6 +244,10 @@ void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSession
 
 	if (!bSuccess)
 	{
+		ShowAlert(
+			FText::FromString(TEXT("오류")),
+			FText::FromString(TEXT("방 검색에 실패했습니다."))
+		);
 		return;
 	}
 
@@ -210,10 +262,19 @@ void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSession
 
 void UMatchWidget::HandleSessionJoined(bool bSuccess)
 {
+	HideLoading();
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session joined %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
+
 	if (bSuccess && UIFlowSubsystem)
 	{
 		UIFlowSubsystem->SetScreenLobby(false);
 		RemoveFromParent();
+	}
+	else if (!bSuccess)
+	{
+		ShowAlert(
+			FText::FromString(TEXT("오류")),
+			FText::FromString(TEXT("방 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))
+		);
 	}
 }
