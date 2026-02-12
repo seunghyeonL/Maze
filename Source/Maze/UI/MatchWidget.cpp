@@ -8,7 +8,6 @@
 
 #include "Components/Button.h"
 #include "Components/ListView.h"
-#include "GameMode/TitleGameMode.h"
 
 void UMatchWidget::NativeConstruct()
 {

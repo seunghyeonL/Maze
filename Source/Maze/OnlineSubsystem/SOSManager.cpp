@@ -63,9 +63,9 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 	Settings.bShouldAdvertise = true;
 	Settings.bAllowJoinInProgress = true;
 
-	// "Steam Lobby 방식" 핵심 옵션들
-	Settings.bUsesPresence = true;
-	Settings.bUseLobbiesIfAvailable = true;
+	// Null OSS용 설정 (Steam 전환 시 변경 필요)
+	Settings.bUsesPresence = false;          // Null OSS는 Presence 미지원
+	Settings.bUseLobbiesIfAvailable = false; // Null OSS는 Lobby 미지원
 
 	// 맵 이름 같은 메타데이터도 올려두면 편함
 	Settings.Set(SETTING_MAPNAME, SessionMap, EOnlineDataAdvertisementType::ViaOnlineService);
@@ -136,8 +136,9 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 	SessionSearch->MaxSearchResults = FMath::Clamp(MaxResults, 1, 500);
 	SessionSearch->bIsLanQuery = bLAN;
 
-	// Steam Lobby/Presence 기반 검색에서 자주 필요한 조건
-	SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	// Null OSS는 SEARCH_LOBBIES를 지원하지 않음 - LAN 브로드캐스트로 검색
+	// Steam 전환 시 SEARCH_LOBBIES 또는 SEARCH_PRESENCE 사용
+	// SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 
 	FindHandle = Sessions->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(this, &USOSManager::HandleFindSessionsComplete)
@@ -233,20 +234,34 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	}
 
 	const bool bSuccess = (Result == EOnJoinSessionCompleteResult::Success);
-	OnSessionJoined.Broadcast(bSuccess);
+	UE_LOG(LogTemp, Log, TEXT("MazeOSS: JoinSession result = %d"), static_cast<int32>(Result));
 
-	if (!bSuccess || !Sessions.IsValid()) return;
-
-	FString ConnectString;
-	if (!Sessions->GetResolvedConnectString(SessionName, ConnectString))
+	if (!bSuccess || !Sessions.IsValid())
 	{
 		OnSessionJoined.Broadcast(false);
 		return;
 	}
 
+	FString ConnectString;
+	if (!Sessions->GetResolvedConnectString(SessionName, ConnectString))
+	{
+		UE_LOG(LogTemp, Error, TEXT("MazeOSS: GetResolvedConnectString FAILED"));
+		OnSessionJoined.Broadcast(false);
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeOSS: ConnectString = %s"), *ConnectString);
+
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
+		UE_LOG(LogTemp, Log, TEXT("MazeOSS: ClientTravel to %s"), *ConnectString);
 		PC->ClientTravel(ConnectString, ETravelType::TRAVEL_Absolute);
+		OnSessionJoined.Broadcast(true);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("MazeOSS: PlayerController not found"));
+		OnSessionJoined.Broadcast(false);
 	}
 }
 
