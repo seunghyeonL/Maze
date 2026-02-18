@@ -1,9 +1,9 @@
 #include "TitlePlayerController.h"
 
-#include "LobbyWidget.h"
-#include "MatchWidget.h"
-#include "TitleWidget.h"
-#include "UIFlowSubsystem.h"
+#include "../UI/LobbyWidget.h"
+#include "../UI/MatchWidget.h"
+#include "../UI/TitleWidget.h"
+#include "../UI/UIFlowSubsystem.h"
 
 #include "OnlineSubsystem/SOSManager.h"
 
