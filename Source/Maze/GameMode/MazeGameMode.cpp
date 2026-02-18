@@ -6,7 +6,11 @@
 #include "Helper/MazeGenerator.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-
+#include "OnlineSubsystem.h"
+#include "OnlineSubsystemUtils.h"
+#include "Online/OnlineSessionNames.h"
+#include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 AMazeGameMode::AMazeGameMode()
 {
@@ -52,7 +56,19 @@ void AMazeGameMode::Logout(AController* Exiting)
 
 int32 AMazeGameMode::GetExpectedPlayerCount() const
 {
-	// 현재 접속된 플레이어 수 기준 (최소 1명)
+	// 세션의 MaxPlayers를 기준으로 대기 (가장 정확)
+	if (const UWorld* World = GetWorld())
+	{
+		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
+		if (Sessions.IsValid())
+		{
+			if (const FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
+			{
+				return NamedSession->SessionSettings.NumPublicConnections;
+			}
+		}
+	}
+	// Fallback: 현재 접속된 플레이어 수 (세션 정보 없을 때)
 	return FMath::Max(1, NumPlayers);
 }
 
