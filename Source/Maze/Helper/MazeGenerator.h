@@ -59,7 +59,7 @@ public:
 		TSubclassOf<AActor> GoalActorClass);
 	
 private:
-	static void BuildAdjMat(int32 Width, int32 Height, TArray<TArray<int32>>& AdjMat);
+	static void BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid);
 	static int32 FindRoot(int32 u, TArray<int32>& UF);
 	static bool UnionSet(int32 u, int32 v, TArray<int32>& UF);
 	

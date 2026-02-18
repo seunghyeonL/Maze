@@ -62,16 +62,15 @@ void UMazeGenerator::GenerateMaze(
         return;
     }
 
-    // 인접행렬 생성 (0으로 초기화)
-    TArray<TArray<int32>> AdjMat;
-    AdjMat.SetNum(NodeNum);
-    for (auto& Row : AdjMat)
+    // FCell 그리드 생성 (기본값: 모든 벽 있음)
+    TArray<FCellRow> Grid;
+    Grid.SetNum(Height);
+    for (auto& Row : Grid)
     {
-        Row.Init(0, NodeNum);
+        Row.Cells.SetNum(Width);
     }
 
-    // (주의) BuildAdjMat(N, M)에서 N=Height, M=Width로 통일
-    BuildAdjMat(Height, Width, AdjMat);
+    BuildMazeGrid(Height, Width, Grid);
 
     // 랜덤 노드 뽑기
     TArray<int32> Nodes;
@@ -122,8 +121,6 @@ void UMazeGenerator::GenerateMaze(
     {
         for (int32 c = 0; c < Width; ++c)
         {
-            const int32 u = ToNode(r, c, Width);
-
             // (A) 북쪽 외곽 (r == 0): BoundaryRow = 0
             if (r == 0)
             {
@@ -147,8 +144,7 @@ void UMazeGenerator::GenerateMaze(
             }
             else
             {
-                const int32 v = ToNode(r, c + 1, Width);
-                if (AdjMat[u][v] == 0)
+                if (Grid[r].Cells[c].RightWall)
                 {
                     const FVector Pos = VerticalBoundaryCenter(r, c + 1, CellSize, 0.f);
                     SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
@@ -164,8 +160,7 @@ void UMazeGenerator::GenerateMaze(
             }
             else
             {
-                const int32 v = ToNode(r + 1, c, Width);
-                if (AdjMat[u][v] == 0)
+                if (Grid[r].Cells[c].DownWall)
                 {
                     const FVector Pos = HorizontalBoundaryCenter(r + 1, c, CellSize, 0.f);
                     SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
@@ -195,47 +190,51 @@ void UMazeGenerator::GenerateMaze(
     }
 }
 
-void UMazeGenerator::BuildAdjMat(int32 N, int32 M, TArray<TArray<int32>>& AdjMat)
+void UMazeGenerator::BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid)
 {
-	int32 NodeNum = AdjMat.Num();
-	
+	const int32 NodeNum = Height * Width;
+
 	// Random Kruskal
 	TArray<int32> UF;
 	UF.Init(-1, NodeNum);
-	
+
 	TArray<TPair<int32, int32>> Edges;
-	Edges.Reserve((N - 1) * M + N * (M - 1));
+	Edges.Reserve((Height - 1) * Width + Height * (Width - 1));
 
-	// 세로 간선: (i,j) - (i+1,j)
-	for (int32 i = 0; i < N - 1; ++i)
-		for (int32 j = 0; j < M; ++j)
+	// 세로 간선: (i,j) - (i+1,j)  →  DownWall
+	for (int32 i = 0; i < Height - 1; ++i)
+		for (int32 j = 0; j < Width; ++j)
 		{
-			int32 u = i * M + j;
-			int32 v = (i + 1) * M + j;
+			int32 u = i * Width + j;
+			int32 v = (i + 1) * Width + j;
 			Edges.Emplace(u, v);
 		}
 
-	// 가로 간선: (i,j) - (i,j+1)
-	for (int32 i = 0; i < N; ++i)
-		for (int32 j = 0; j < M - 1; ++j)
+	// 가로 간선: (i,j) - (i,j+1)  →  RightWall
+	for (int32 i = 0; i < Height; ++i)
+		for (int32 j = 0; j < Width - 1; ++j)
 		{
-			int32 u = i * M + j;
-			int32 v = i * M + (j + 1);
+			int32 u = i * Width + j;
+			int32 v = i * Width + (j + 1);
 			Edges.Emplace(u, v);
 		}
-	
+
 	Algo::RandomShuffle(Edges);
-	
+
 	int32 Count = 0;
 	for (auto [u, v] : Edges)
 	{
-		if (Count == NodeNum - 1) 
+		if (Count == NodeNum - 1)
 			break;
-		
+
 		if (UnionSet(u, v, UF))
 		{
-			AdjMat[u][v] = 1;
-			AdjMat[v][u] = 1;
+			const int32 Row = u / Width;
+			const int32 Col = u % Width;
+			if (v - u == 1)
+				Grid[Row].Cells[Col].RightWall = false;  // 가로 통로: 오른쪽 벽 제거
+			else
+				Grid[Row].Cells[Col].DownWall = false;   // 세로 통로: 아래 벽 제거
 			Count++;
 		}
 	}
