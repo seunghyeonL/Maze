@@ -1,7 +1,7 @@
 #include "LobbyWidget.h"
 
 #include "LobbyPlayerEntryItem.h"
-#include "MazeLobbyPlayerState.h"
+#include "PlayerState/MazeLobbyPlayerState.h"
 #include "OnlineSubsystem/SOSManager.h"
 #include "UIFlowSubsystem.h"
 
