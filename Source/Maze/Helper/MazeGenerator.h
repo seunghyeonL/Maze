@@ -55,7 +55,6 @@ public:
 		int32 PlayerNum,
 		float CellSize,
 		TSubclassOf<AActor> WallClass,
-		TSubclassOf<AActor> FloorClass,
 		TSubclassOf<AActor> GoalActorClass);
 	
 private:

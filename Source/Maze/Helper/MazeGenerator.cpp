@@ -12,7 +12,6 @@ void UMazeGenerator::GenerateMaze(
 	int32 PlayerNum,
 	float CellSize,
 	TSubclassOf<AActor> WallClass,
-	TSubclassOf<AActor> FloorClass,
 	TSubclassOf<AActor> GoalActorClass
 	)
 {
@@ -32,12 +31,6 @@ void UMazeGenerator::GenerateMaze(
     if (!WallClass)
     {
         UE_LOG(LogTemp, Error, TEXT("GenerateMaze: WallClass is null"));
-        return;
-    }
-
-    if (!FloorClass)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: FloorClass is null"));
         return;
     }
 
@@ -93,18 +86,7 @@ void UMazeGenerator::GenerateMaze(
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    // ---- 1) 바닥 스폰 (각 셀마다) ----
-    // FloorClass가 "한 장으로 전체를 덮는" 메쉬면 여기 루프 대신 한 번만 스폰하고 스케일 조절하는 게 더 좋음.
-    for (int32 r = 0; r < Height; ++r)
-    {
-        for (int32 c = 0; c < Width; ++c)
-        {
-            const FVector Pos = CellCenter(r, c, CellSize, 0.f);
-            World->SpawnActor<AActor>(FloorClass, Pos, FRotator::ZeroRotator, SpawnParams);
-        }
-    }
-
-    // ---- 2) 벽 스폰 ----
+    // ---- 1) 벽 스폰 ----
     // 벽 메시 기본 방향 가정:
     // - "가로 벽"(동서로 길게): Yaw = 0
     // - "세로 벽"(남북으로 길게): Yaw = 90
@@ -169,7 +151,7 @@ void UMazeGenerator::GenerateMaze(
         }
     }
 
-    // ---- 3) Goal 스폰 ----
+    // ---- 2) Goal 스폰 ----
     {
         int32 gr, gc;
         ToRC(GoalNode, Width, gr, gc);
@@ -178,7 +160,7 @@ void UMazeGenerator::GenerateMaze(
         World->SpawnActor<AActor>(GoalActorClass, Pos, FRotator::ZeroRotator, SpawnParams);
     }
 
-    // ---- 4) PlayerStart 스폰 ----
+    // ---- 3) PlayerStart 스폰 ----
     // 여기선 기본 엔진의 APlayerStart를 사용. (원하면 TSubclassOf<APlayerStart>를 파라미터로 받는 게 더 좋음)
     for (int32 i = 0; i < PlayerStartNodes.Num(); ++i)
     {

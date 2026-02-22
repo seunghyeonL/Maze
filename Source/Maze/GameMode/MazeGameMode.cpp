@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MazeGameMode.h"
 
@@ -6,6 +6,8 @@
 #include "Helper/MazeGenerator.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "GameFramework/PlayerStart.h"
+#include "EngineUtils.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "Online/OnlineSessionNames.h"
@@ -30,6 +32,12 @@ void AMazeGameMode::HandleStartingNewPlayer_Implementation(APlayerController* Ne
 	if (bMazeGenerated)
 	{
 		Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+		// 뒤늦게 접속한 플레이어의 로딩 오버레이 해제
+		if (AMazePlayerController* MazePC = Cast<AMazePlayerController>(NewPlayer))
+		{
+			MazePC->ClientHideLoading();
+		}
 	}
 	// else: PostLogin에서 WaitingPlayers에 추가됐으므로 TryStartMatch가 처리함
 }
@@ -64,11 +72,14 @@ int32 AMazeGameMode::GetExpectedPlayerCount() const
 		{
 			if (const FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
 			{
-				return NamedSession->SessionSettings.NumPublicConnections;
+				const int32 Count = NamedSession->SessionSettings.NumPublicConnections;
+				UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from session = %d"), Count);
+				return Count;
 			}
 		}
 	}
 	// Fallback: 현재 접속된 플레이어 수 (세션 정보 없을 때)
+	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session found! Fallback ExpectedPlayerCount = %d"), FMath::Max(1, NumPlayers));
 	return FMath::Max(1, NumPlayers);
 }
 
@@ -93,17 +104,30 @@ void AMazeGameMode::TryStartMatch()
 
 void AMazeGameMode::GenerateAndSpawnMaze()
 {
-	bMazeGenerated = true;
-
-	if (!WallClass || !FloorClass || !GoalActorClass)
+	if (!WallClass || !GoalActorClass)
 	{
-		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/FloorClass/GoalActorClass not set in BP defaults!"));
+		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/GoalActorClass not set in BP defaults!"));
 		return;
 	}
 
+	bMazeGenerated = true;
+
+	// 레벨에 미리 배치된 PlayerStart가 있으면 ChoosePlayerStart가 그쪽을 선택할 수 있음 → 전부 제거
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		It->Destroy();
+	}
+
 	const int32 PlayerNum = WaitingPlayers.Num();
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze Width=%d Height=%d Players=%d CellSize=%.0f"),
+		MazeWidth, MazeHeight, PlayerNum, CellSize);
 	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize,
-		WallClass, FloorClass, GoalActorClass);
+		WallClass, GoalActorClass);
+
+	// StartMatch → match state를 InProgress로 전환
+	// AGameMode::RestartPlayer는 IsMatchInProgress()==true일 때만 동작함
+	// Super::HandleMatchHasStarted가 RestartPlayer를 호출하므로, SpawnAllPlayers에서는 이중 스폰 방지
+	StartMatch();
 
 	SpawnAllPlayers();
 }
@@ -117,7 +141,14 @@ void AMazeGameMode::SpawnAllPlayers()
 			continue;
 		}
 
-		RestartPlayer(PC);
+		// Super::HandleMatchHasStarted가 이미 RestartPlayer를 호출했을 수 있음 → Pawn 체크
+		if (!PC->GetPawn())
+		{
+			RestartPlayer(PC);
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: SpawnAllPlayers - %s Pawn=%s"),
+			*PC->GetName(), PC->GetPawn() ? *PC->GetPawn()->GetName() : TEXT("NULL"));
 
 		if (AMazePlayerController* MazePC = Cast<AMazePlayerController>(PC))
 		{
