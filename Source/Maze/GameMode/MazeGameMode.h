@@ -6,7 +6,8 @@
 #include "GameFramework/GameMode.h"
 #include "MazeGameMode.generated.h"
 
-class AMazePlayerController;
+class AMazeGameState;
+class AMazeTargetPoint;
 
 UCLASS()
 class MAZE_API AMazeGameMode : public AGameMode
@@ -20,12 +21,11 @@ public:
 	void OnGoalReached(APlayerController* Winner);
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
-	virtual void PostLogin(APlayerController* NewPlayer) override;
-	virtual void Logout(AController* Exiting) override;
+	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+	virtual void PreLogin(const FString& Options, const FString& Address,
+		const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 
-	// ---- Maze Configuration (BP에서 설정) ----
+	// ---- Maze Configuration ----
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	int32 MazeWidth = 7;
 
@@ -41,26 +41,36 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Maze")
 	TSubclassOf<AActor> GoalActorClass;
 
-	/** 결과 표시 후 로비 복귀까지 대기 시간 (초) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	float ReturnToLobbyDelay = 3.0f;
 
-	/** 세션 정보 없을 때 사용할 최소 대기 인원 수 (OSS NULL 테스트 시 유용) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	int32 MinExpectedPlayers = 2;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
+	float CountdownDuration = 10.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
+	float ArrivalTimeoutDuration = 30.f;
+
 private:
-	void TryStartMatch();
+	void TryStartGameFlow();
 	void GenerateAndSpawnMaze();
-	void SpawnAllPlayers();
-	void NotifyGameResult(APlayerController* Winner);
+	void TeleportPlayers();
+	void OnArrivalTimeout();
 	void ReturnToLobby();
 	int32 GetExpectedPlayerCount() const;
 
 	UPROPERTY()
-	TArray<TObjectPtr<APlayerController>> WaitingPlayers;
+	TArray<TObjectPtr<AController>> ArrivedPlayers;
 
-	bool bMazeGenerated = false;
+	UPROPERTY()
+	TArray<TObjectPtr<AMazeTargetPoint>> MazeTargetPoints;
+
+	bool bGameFlowStarted = false;
 	bool bMatchEnded = false;
+
+	FTimerHandle CountdownTimerHandle;
+	FTimerHandle ArrivalTimeoutHandle;
 	FTimerHandle ReturnTimerHandle;
 };

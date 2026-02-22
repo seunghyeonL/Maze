@@ -1,12 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MazeGameMode.h"
-
-#include "MazePlayerController.h"
+#include "GameState/MazeGameState.h"
+#include "MazeTargetPoint.h"
 #include "Helper/MazeGenerator.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
-#include "GameFramework/PlayerStart.h"
 #include "EngineUtils.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
@@ -16,55 +15,188 @@
 
 AMazeGameMode::AMazeGameMode()
 {
-	bDelayedStart = true;
-	PlayerControllerClass = AMazePlayerController::StaticClass();
+	bUseSeamlessTravel = true;
+	bDelayedStart = false;
+	GameStateClass = AMazeGameState::StaticClass();
 }
 
-void AMazeGameMode::BeginPlay()
+void AMazeGameMode::HandleSeamlessTravelPlayer(AController*& C)
 {
-	Super::BeginPlay();
-}
+	Super::HandleSeamlessTravelPlayer(C);
 
-void AMazeGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
-{
-	// 미로 생성 전에는 RestartPlayer 호출하지 않음.
-	// 미로가 이미 생성된 경우(뒤늦게 접속한 플레이어)에만 즉시 스폰.
-	if (bMazeGenerated)
+	if (Cast<APlayerController>(C))
 	{
-		Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+		ArrivedPlayers.AddUnique(C);
+		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Player arrived (%d so far)"), ArrivedPlayers.Num());
 
-		// 뒤늦게 접속한 플레이어의 로딩 오버레이 해제
-		if (AMazePlayerController* MazePC = Cast<AMazePlayerController>(NewPlayer))
+		if (ArrivedPlayers.Num() == 1 && !bGameFlowStarted)
 		{
-			MazePC->ClientHideLoading();
+			GetWorldTimerManager().SetTimer(
+				ArrivalTimeoutHandle,
+				this,
+				&AMazeGameMode::OnArrivalTimeout,
+				ArrivalTimeoutDuration,
+				false
+			);
 		}
 	}
-	// else: PostLogin에서 WaitingPlayers에 추가됐으므로 TryStartMatch가 처리함
+
+	TryStartGameFlow();
 }
 
-void AMazeGameMode::PostLogin(APlayerController* NewPlayer)
+void AMazeGameMode::TryStartGameFlow()
 {
-	Super::PostLogin(NewPlayer);
+	if (bGameFlowStarted || bMatchEnded) return;
 
-	WaitingPlayers.AddUnique(NewPlayer);
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Player logged in (%d/%d)"),
-		WaitingPlayers.Num(), GetExpectedPlayerCount());
-
-	TryStartMatch();
-}
-
-void AMazeGameMode::Logout(AController* Exiting)
-{
-	if (APlayerController* PC = Cast<APlayerController>(Exiting))
+	if (NumTravellingPlayers != 0)
 	{
-		WaitingPlayers.Remove(PC);
+		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Still waiting for %d travelling players"), NumTravellingPlayers);
+		return;
 	}
-	Super::Logout(Exiting);
+
+	if (ArrivedPlayers.Num() < MinExpectedPlayers)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Waiting for players (%d/%d)"),
+			ArrivedPlayers.Num(), MinExpectedPlayers);
+		return;
+	}
+
+	bGameFlowStarted = true;
+	GetWorldTimerManager().ClearTimer(ArrivalTimeoutHandle);
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: All players arrived. Generating maze..."));
+	GenerateAndSpawnMaze();
+}
+
+void AMazeGameMode::GenerateAndSpawnMaze()
+{
+	if (!WallClass || !GoalActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/GoalActorClass not set in BP defaults!"));
+		return;
+	}
+
+	const int32 PlayerNum = ArrivedPlayers.Num();
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze %dx%d Players=%d CellSize=%.0f"),
+		MazeWidth, MazeHeight, PlayerNum, CellSize);
+	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize, WallClass, GoalActorClass);
+
+	// 스폰된 MazeTargetPoint 수집, PlayerIndex 기준 정렬
+	MazeTargetPoints.Reset();
+	for (TActorIterator<AMazeTargetPoint> It(GetWorld()); It; ++It)
+	{
+		MazeTargetPoints.Add(*It);
+	}
+	MazeTargetPoints.Sort([](const TObjectPtr<AMazeTargetPoint>& A, const TObjectPtr<AMazeTargetPoint>& B)
+	{
+		return A->PlayerIndex < B->PlayerIndex;
+	});
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Found %d MazeTargetPoints"), MazeTargetPoints.Num());
+
+	// GameState 업데이트 (Phase: Countdown)
+	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
+	{
+		GS->Phase = EMazePhase::Countdown;
+		GS->CountdownEndTime = GetWorld()->GetTimeSeconds() + CountdownDuration;
+		GS->ForceNetUpdate();
+	}
+
+	// 카운트다운 타이머
+	GetWorldTimerManager().SetTimer(
+		CountdownTimerHandle,
+		this,
+		&AMazeGameMode::TeleportPlayers,
+		CountdownDuration,
+		false
+	);
+}
+
+void AMazeGameMode::TeleportPlayers()
+{
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Teleporting players to maze start positions"));
+
+	for (int32 i = 0; i < ArrivedPlayers.Num(); ++i)
+	{
+		AController* Controller = ArrivedPlayers[i];
+		if (!Controller) continue;
+
+		APawn* Pawn = Controller->GetPawn();
+		if (!Pawn) continue;
+
+		if (MazeTargetPoints.IsValidIndex(i) && MazeTargetPoints[i])
+		{
+			const FVector TargetLoc = MazeTargetPoints[i]->GetActorLocation() + FVector(0.f, 0.f, 100.f);
+			Pawn->SetActorLocation(TargetLoc, false, nullptr, ETeleportType::TeleportPhysics);
+			UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Teleported player[%d] to %s"), i, *TargetLoc.ToString());
+		}
+	}
+
+	// GameState: Playing
+	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
+	{
+		GS->Phase = EMazePhase::Playing;
+		GS->ForceNetUpdate();
+	}
+}
+
+void AMazeGameMode::PreLogin(const FString& Options, const FString& Address,
+	const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+
+	if (!ErrorMessage.IsEmpty()) return;
+
+	if (bGameFlowStarted)
+	{
+		ErrorMessage = TEXT("게임이 이미 시작됐습니다.");
+		UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: PreLogin rejected (game already started)"));
+	}
+}
+
+void AMazeGameMode::OnGoalReached(APlayerController* Winner)
+{
+	if (bMatchEnded) return;
+	bMatchEnded = true;
+
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Goal reached! Winner: %s"),
+		Winner ? *Winner->GetName() : TEXT("Unknown"));
+
+	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
+	{
+		GS->WinnerPlayer = Winner ? Winner->PlayerState : nullptr;
+		GS->Phase = EMazePhase::GameOver;
+		GS->ForceNetUpdate();
+	}
+
+	GetWorldTimerManager().SetTimer(
+		ReturnTimerHandle,
+		this,
+		&AMazeGameMode::ReturnToLobby,
+		ReturnToLobbyDelay,
+		false
+	);
+}
+
+void AMazeGameMode::ReturnToLobby()
+{
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Returning to TitleLevel (seamless)..."));
+	GetWorld()->ServerTravel(TEXT("/Game/Levels/TitleLevel?listen"));
+}
+
+void AMazeGameMode::OnArrivalTimeout()
+{
+	if (bGameFlowStarted || bMatchEnded) return;
+
+	if (ArrivedPlayers.Num() >= 1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: Arrival timeout! Starting with %d players"),
+			ArrivedPlayers.Num());
+		bGameFlowStarted = true;
+		GenerateAndSpawnMaze();
+	}
 }
 
 int32 AMazeGameMode::GetExpectedPlayerCount() const
 {
-	// 세션의 MaxPlayers를 기준으로 대기 (가장 정확)
 	if (const UWorld* World = GetWorld())
 	{
 		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
@@ -78,138 +210,7 @@ int32 AMazeGameMode::GetExpectedPlayerCount() const
 			}
 		}
 	}
-	// Fallback: MinExpectedPlayers 사용 (OSS NULL에서 세션이 유실되었을 때)
-	// 기존: FMath::Max(1, NumPlayers) → 서버 1명만 접속 시 즉시 매치 시작하는 버그
 	const int32 Fallback = FMath::Max(MinExpectedPlayers, NumPlayers);
-	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session found! Fallback ExpectedPlayerCount = %d (MinExpected=%d, NumPlayers=%d)"),
-		Fallback, MinExpectedPlayers, NumPlayers);
+	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session, fallback ExpectedCount=%d"), Fallback);
 	return Fallback;
-}
-
-void AMazeGameMode::TryStartMatch()
-{
-	if (bMazeGenerated || bMatchEnded)
-	{
-		return;
-	}
-
-	const int32 Expected = GetExpectedPlayerCount();
-	if (WaitingPlayers.Num() < Expected)
-	{
-		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Waiting for players (%d/%d)"),
-			WaitingPlayers.Num(), Expected);
-		return;
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: All players connected. Generating maze..."));
-	GenerateAndSpawnMaze();
-}
-
-void AMazeGameMode::GenerateAndSpawnMaze()
-{
-	if (!WallClass || !GoalActorClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/GoalActorClass not set in BP defaults!"));
-		return;
-	}
-
-	bMazeGenerated = true;
-
-	// 레벨에 미리 배치된 PlayerStart가 있으면 ChoosePlayerStart가 그쪽을 선택할 수 있음 → 전부 제거
-	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
-	{
-		It->Destroy();
-	}
-
-	const int32 PlayerNum = WaitingPlayers.Num();
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze Width=%d Height=%d Players=%d CellSize=%.0f"),
-		MazeWidth, MazeHeight, PlayerNum, CellSize);
-	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize,
-		WallClass, GoalActorClass);
-
-	// PlayerStart 검증 로그
-	int32 PSCount = 0;
-	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
-	{
-		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Found PlayerStart at %s"), *It->GetActorLocation().ToString());
-		++PSCount;
-	}
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Total PlayerStarts in world = %d"), PSCount);
-
-	// StartMatch → match state를 InProgress로 전환
-	// AGameMode::RestartPlayer는 IsMatchInProgress()==true일 때만 동작함
-	// Super::HandleMatchHasStarted가 RestartPlayer를 호출하므로, SpawnAllPlayers에서는 이중 스폰 방지
-	StartMatch();
-
-	SpawnAllPlayers();
-}
-
-void AMazeGameMode::SpawnAllPlayers()
-{
-	for (APlayerController* PC : WaitingPlayers)
-	{
-		if (!PC)
-		{
-			continue;
-		}
-
-		// Super::HandleMatchHasStarted가 이미 RestartPlayer를 호출했을 수 있음 → Pawn 체크
-		if (!PC->GetPawn())
-		{
-			RestartPlayer(PC);
-		}
-
-		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: SpawnAllPlayers - %s Pawn=%s"),
-			*PC->GetName(), PC->GetPawn() ? *PC->GetPawn()->GetName() : TEXT("NULL"));
-
-		if (AMazePlayerController* MazePC = Cast<AMazePlayerController>(PC))
-		{
-			MazePC->ClientHideLoading();
-		}
-	}
-}
-
-void AMazeGameMode::OnGoalReached(APlayerController* Winner)
-{
-	if (bMatchEnded)
-	{
-		return;
-	}
-
-	bMatchEnded = true;
-
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Goal reached by player!"));
-	NotifyGameResult(Winner);
-
-	GetWorldTimerManager().SetTimer(
-		ReturnTimerHandle,
-		this,
-		&AMazeGameMode::ReturnToLobby,
-		ReturnToLobbyDelay,
-		false
-	);
-}
-
-void AMazeGameMode::NotifyGameResult(APlayerController* Winner)
-{
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		AMazePlayerController* MazePC = Cast<AMazePlayerController>(It->Get());
-		if (!MazePC)
-		{
-			continue;
-		}
-
-		const bool bIsWinner = (MazePC == Winner);
-		MazePC->ClientShowGameResult(bIsWinner);
-	}
-}
-
-void AMazeGameMode::ReturnToLobby()
-{
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Returning to TitleLevel (lobby)..."));
-	// ServerTravel: 리슨서버 + 세션 유지, 모든 클라이언트가 함께 이동
-	// UIFlowSubsystem은 GameInstance 서브시스템이라 유지됨 -> LobbyWidget 자동 표시
-	// MazeLobbyPlayerState 재생성 -> bIsReady=false 자동 초기화
-	GetWorld()->ServerTravel(TEXT("/Game/Levels/TitleLevel"));
 }
