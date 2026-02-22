@@ -18,6 +18,8 @@ class MAZE_API ATitleGameMode : public AGameMode
 	GENERATED_BODY()
 	
 public:
+	ATitleGameMode();
+	
 	// UPROPERTY(BlueprintAssignable) 
 	// mutable FOnLoginFailed OnLoginFailed;
 	

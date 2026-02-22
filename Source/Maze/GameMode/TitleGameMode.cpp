@@ -6,6 +6,11 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
+ATitleGameMode::ATitleGameMode()
+{
+	bUseSeamlessTravel = true;
+}
+
 void ATitleGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
 	FString& ErrorMessage)
 {
