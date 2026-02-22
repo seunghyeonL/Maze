@@ -189,7 +189,7 @@ void ULobbyWidget::HandleGameStartClicked()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel"));
-	World->ServerTravel(TEXT("/Game/Levels/MazeLevel"));
+	World->ServerTravel(TEXT("/Game/Levels/MazeLevel?listen"));
 }
 
 void ULobbyWidget::HandleExitToMatchingClicked()
