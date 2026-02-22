@@ -3,7 +3,7 @@
 #include "MazeGenerator.h"
 
 #include "Algo/RandomShuffle.h"
-#include "GameFramework/PlayerStart.h"
+#include "MazeTargetPoint.h"
 
 void UMazeGenerator::GenerateMaze(
 	UObject* WorldContextObject,
@@ -161,19 +161,19 @@ void UMazeGenerator::GenerateMaze(
         UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Goal spawned at %s"), *Pos.ToString());
     }
 
-    // ---- 3) PlayerStart 스폰 ----
-    // APlayerStart의 캡슐 중심이 Location이므로, Z=0에 스폰하면 캡슐 하단이 바닥 아래로 내려감.
-    // ChoosePlayerStart가 EncroachingBlockingGeometry 체크 시 바닥과 충돌하여 거부됨.
-    // → 캡슐 하단이 바닥(Z=0) 위에 오도록 Z를 캡슐 반높이만큼 올려줌.
-    constexpr float PlayerStartZ = 98.f; // Pawn 캡슐 반높이(~96) + 여유(2)
+    // ---- 3) MazeTargetPoint 스폰 ----
     for (int32 i = 0; i < PlayerStartNodes.Num(); ++i)
     {
         int32 pr, pc;
         ToRC(PlayerStartNodes[i], Width, pr, pc);
 
-        const FVector Pos = CellCenter(pr, pc, CellSize, PlayerStartZ);
-        APlayerStart* PS = World->SpawnActor<APlayerStart>(APlayerStart::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
-        UE_LOG(LogTemp, Log, TEXT("MazeGenerator: PlayerStart[%d] spawned at %s"), i, *Pos.ToString());
+        const FVector Pos = CellCenter(pr, pc, CellSize, 0.f);
+        AMazeTargetPoint* TP = World->SpawnActor<AMazeTargetPoint>(AMazeTargetPoint::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
+        if (TP)
+        {
+            TP->PlayerIndex = i;
+        }
+        UE_LOG(LogTemp, Log, TEXT("MazeGenerator: MazeTargetPoint[%d] spawned at %s"), i, *Pos.ToString());
     }
 }
 
