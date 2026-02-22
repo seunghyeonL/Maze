@@ -78,9 +78,12 @@ int32 AMazeGameMode::GetExpectedPlayerCount() const
 			}
 		}
 	}
-	// Fallback: 현재 접속된 플레이어 수 (세션 정보 없을 때)
-	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session found! Fallback ExpectedPlayerCount = %d"), FMath::Max(1, NumPlayers));
-	return FMath::Max(1, NumPlayers);
+	// Fallback: MinExpectedPlayers 사용 (OSS NULL에서 세션이 유실되었을 때)
+	// 기존: FMath::Max(1, NumPlayers) → 서버 1명만 접속 시 즉시 매치 시작하는 버그
+	const int32 Fallback = FMath::Max(MinExpectedPlayers, NumPlayers);
+	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session found! Fallback ExpectedPlayerCount = %d (MinExpected=%d, NumPlayers=%d)"),
+		Fallback, MinExpectedPlayers, NumPlayers);
+	return Fallback;
 }
 
 void AMazeGameMode::TryStartMatch()
@@ -123,6 +126,15 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 		MazeWidth, MazeHeight, PlayerNum, CellSize);
 	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize,
 		WallClass, GoalActorClass);
+
+	// PlayerStart 검증 로그
+	int32 PSCount = 0;
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Found PlayerStart at %s"), *It->GetActorLocation().ToString());
+		++PSCount;
+	}
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Total PlayerStarts in world = %d"), PSCount);
 
 	// StartMatch → match state를 InProgress로 전환
 	// AGameMode::RestartPlayer는 IsMatchInProgress()==true일 때만 동작함

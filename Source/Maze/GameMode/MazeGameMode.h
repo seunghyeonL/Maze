@@ -45,6 +45,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	float ReturnToLobbyDelay = 3.0f;
 
+	/** 세션 정보 없을 때 사용할 최소 대기 인원 수 (OSS NULL 테스트 시 유용) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
+	int32 MinExpectedPlayers = 2;
+
 private:
 	void TryStartMatch();
 	void GenerateAndSpawnMaze();
