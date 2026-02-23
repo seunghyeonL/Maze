@@ -2,7 +2,7 @@
 
 #include "MazeGameMode.h"
 #include "GameState/MazeGameState.h"
-#include "MazeTargetPoint.h"
+#include "../Actor/MazeTargetPoint.h"
 #include "Helper/MazeGenerator.h"
 #include "Engine/World.h"
 #include "TimerManager.h"

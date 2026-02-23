@@ -1,4 +1,4 @@
-﻿#include "MazeTargetPoint.h"
+﻿#include "../Actor/MazeTargetPoint.h"
 
 AMazeTargetPoint::AMazeTargetPoint()
 {

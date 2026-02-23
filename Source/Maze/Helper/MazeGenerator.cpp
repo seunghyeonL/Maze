@@ -3,7 +3,7 @@
 #include "MazeGenerator.h"
 
 #include "Algo/RandomShuffle.h"
-#include "MazeTargetPoint.h"
+#include "../Actor/MazeTargetPoint.h"
 
 void UMazeGenerator::GenerateMaze(
 	UObject* WorldContextObject,
