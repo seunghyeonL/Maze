@@ -8,7 +8,6 @@
 
 ATitleGameMode::ATitleGameMode()
 {
-	bUseSeamlessTravel = true;
 }
 
 void ATitleGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,

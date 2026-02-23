@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MazeGameMode.h"
+#include "PlayerController/MazePlayerController.h"
 #include "GameState/MazeGameState.h"
 #include "../Actor/MazeTargetPoint.h"
 #include "Helper/MazeGenerator.h"
@@ -15,30 +16,27 @@
 
 AMazeGameMode::AMazeGameMode()
 {
-	bUseSeamlessTravel = true;
+	PlayerControllerClass = AMazePlayerController::StaticClass();
 	bDelayedStart = false;
 	GameStateClass = AMazeGameState::StaticClass();
 }
 
-void AMazeGameMode::HandleSeamlessTravelPlayer(AController*& C)
+void AMazeGameMode::PostLogin(APlayerController* NewPlayer)
 {
-	Super::HandleSeamlessTravelPlayer(C);
+	Super::PostLogin(NewPlayer);
 
-	if (Cast<APlayerController>(C))
+	ArrivedPlayers.AddUnique(NewPlayer);
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Player arrived (%d so far)"), ArrivedPlayers.Num());
+
+	if (ArrivedPlayers.Num() == 1 && !bGameFlowStarted)
 	{
-		ArrivedPlayers.AddUnique(C);
-		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Player arrived (%d so far)"), ArrivedPlayers.Num());
-
-		if (ArrivedPlayers.Num() == 1 && !bGameFlowStarted)
-		{
-			GetWorldTimerManager().SetTimer(
-				ArrivalTimeoutHandle,
-				this,
-				&AMazeGameMode::OnArrivalTimeout,
-				ArrivalTimeoutDuration,
-				false
-			);
-		}
+		GetWorldTimerManager().SetTimer(
+			ArrivalTimeoutHandle,
+			this,
+			&AMazeGameMode::OnArrivalTimeout,
+			ArrivalTimeoutDuration,
+			false
+		);
 	}
 
 	TryStartGameFlow();
@@ -47,12 +45,6 @@ void AMazeGameMode::HandleSeamlessTravelPlayer(AController*& C)
 void AMazeGameMode::TryStartGameFlow()
 {
 	if (bGameFlowStarted || bMatchEnded) return;
-
-	if (NumTravellingPlayers != 0)
-	{
-		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Still waiting for %d travelling players"), NumTravellingPlayers);
-		return;
-	}
 
 	if (ArrivedPlayers.Num() < MinExpectedPlayers)
 	{

@@ -21,7 +21,7 @@ public:
 	void OnGoalReached(APlayerController* Winner);
 
 protected:
-	virtual void HandleSeamlessTravelPlayer(AController*& C) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual void PreLogin(const FString& Options, const FString& Address,
 		const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 
