@@ -60,8 +60,8 @@ void AMazeGameState::OnRep_MatchResult()
     ResultWidgetInstance = CreateWidget<UCommonModalWidget>(PC, ResultModalClass);
     if (ResultWidgetInstance)
     {
-        ResultWidgetInstance->ShowAlert(Title, Message);
         ResultWidgetInstance->AddToViewport();
+        ResultWidgetInstance->ShowAlert(Title, Message);
     }
 }
 
