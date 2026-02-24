@@ -23,6 +23,9 @@ class MAZE_API AMazeGameState : public AGameState
 public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    void SetPhase(EMazePhase NewPhase);
+    void SetWinnerPlayer(APlayerState* NewWinner);
+
     UPROPERTY(ReplicatedUsing=OnRep_Phase, BlueprintReadOnly, Category="Maze")
     EMazePhase Phase = EMazePhase::WaitingForPlayers;
 

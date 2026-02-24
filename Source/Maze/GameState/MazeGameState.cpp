@@ -16,6 +16,8 @@ void AMazeGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 void AMazeGameState::OnRep_Phase()
 {
+    if (GetNetMode() == NM_DedicatedServer) return;
+
     APlayerController* PC = GetWorld()->GetFirstPlayerController();
     if (!PC) return;
 
@@ -42,6 +44,8 @@ void AMazeGameState::OnRep_Phase()
 
 void AMazeGameState::OnRep_MatchResult()
 {
+    if (GetNetMode() == NM_DedicatedServer) return;
+
     if (!WinnerPlayer) return;
 
     APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -58,5 +62,23 @@ void AMazeGameState::OnRep_MatchResult()
     {
         ResultWidgetInstance->ShowAlert(Title, Message);
         ResultWidgetInstance->AddToViewport();
+    }
+}
+
+void AMazeGameState::SetPhase(EMazePhase NewPhase)
+{
+    Phase = NewPhase;
+    if (HasAuthority())
+    {
+        OnRep_Phase();
+    }
+}
+
+void AMazeGameState::SetWinnerPlayer(APlayerState* NewWinner)
+{
+    WinnerPlayer = NewWinner;
+    if (HasAuthority())
+    {
+        OnRep_MatchResult();
     }
 }

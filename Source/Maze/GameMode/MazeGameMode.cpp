@@ -87,7 +87,7 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 	// GameState 업데이트 (Phase: Countdown)
 	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
 	{
-		GS->Phase = EMazePhase::Countdown;
+		GS->SetPhase(EMazePhase::Countdown);
 		GS->CountdownEndTime = GetWorld()->GetTimeSeconds() + CountdownDuration;
 		GS->ForceNetUpdate();
 	}
@@ -125,7 +125,7 @@ void AMazeGameMode::TeleportPlayers()
 	// GameState: Playing
 	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
 	{
-		GS->Phase = EMazePhase::Playing;
+		GS->SetPhase(EMazePhase::Playing);
 		GS->ForceNetUpdate();
 	}
 }
@@ -154,8 +154,8 @@ void AMazeGameMode::OnGoalReached(APlayerController* Winner)
 
 	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
 	{
-		GS->WinnerPlayer = Winner ? Winner->PlayerState : nullptr;
-		GS->Phase = EMazePhase::GameOver;
+		GS->SetWinnerPlayer(Winner ? Winner->PlayerState : nullptr);
+		GS->SetPhase(EMazePhase::GameOver);
 		GS->ForceNetUpdate();
 	}
 

@@ -13,7 +13,7 @@ void UMazeCountdownWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 
 	if (AMazeGameState* GS = GetWorld()->GetGameState<AMazeGameState>())
 	{
-		const float TimeRemaining = GS->CountdownEndTime - GetWorld()->GetTimeSeconds();
+		const float TimeRemaining = GS->CountdownEndTime - GS->GetServerWorldTimeSeconds();
 		const int32 Remaining = FMath::Max(0, FMath::CeilToInt(TimeRemaining));
 
 		if (CountdownText)
