@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
-#include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState.h"
 #include "MazeGameState.generated.h"
 
 class UMazeCountdownWidget;
@@ -16,7 +16,7 @@ enum class EMazePhase : uint8
 };
 
 UCLASS()
-class MAZE_API AMazeGameState : public AGameStateBase
+class MAZE_API AMazeGameState : public AGameState
 {
     GENERATED_BODY()
 
