@@ -174,7 +174,7 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
-		SOSManager->CreateSession(4, TEXT("/Game/Levels/TitleLevel"), true);
+		SOSManager->CreateSession(4, TEXT("/Game/Levels/TitleLevel"), false);
 	}
 	else
 	{
@@ -188,7 +188,7 @@ void UMatchWidget::HandleFindLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("방 검색 중...")));
-		SOSManager->FindSessions(50, true);
+		SOSManager->FindSessions(50, false);
 	}
 	else
 	{
