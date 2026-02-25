@@ -188,7 +188,14 @@ void ULobbyWidget::HandleGameStartClicked()
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel"));
+	// 현재 로비 인원수를 세션 설정에 저장 (MazeGameMode가 읽어서 사용)
+	if (SOSManager)
+	{
+		SOSManager->SetExpectedPlayers(GameState->PlayerArray.Num());
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d)"),
+		GameState->PlayerArray.Num());
 	World->ServerTravel(TEXT("/Game/Levels/MazeLevel?listen"));
 }
 

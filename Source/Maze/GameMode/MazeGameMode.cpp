@@ -46,10 +46,11 @@ void AMazeGameMode::TryStartGameFlow()
 {
 	if (bGameFlowStarted || bMatchEnded) return;
 
-	if (ArrivedPlayers.Num() < MinExpectedPlayers)
+	const int32 ExpectedCount = GetExpectedPlayerCount();
+	if (ArrivedPlayers.Num() < ExpectedCount)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Waiting for players (%d/%d)"),
-			ArrivedPlayers.Num(), MinExpectedPlayers);
+			ArrivedPlayers.Num(), ExpectedCount);
 		return;
 	}
 
@@ -196,8 +197,17 @@ int32 AMazeGameMode::GetExpectedPlayerCount() const
 		{
 			if (const FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
 			{
+				// GameStart 시점에 저장한 실제 인원수 우선 사용
+				int32 Expected = 0;
+				if (NamedSession->SessionSettings.Get(FName(TEXT("ExpectedPlayers")), Expected) && Expected > 0)
+				{
+					UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from ExpectedPlayers = %d"), Expected);
+					return Expected;
+				}
+
+				// fallback: 세션 최대 인원
 				const int32 Count = NamedSession->SessionSettings.NumPublicConnections;
-				UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from session = %d"), Count);
+				UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from NumPublicConnections = %d"), Count);
 				return Count;
 			}
 		}

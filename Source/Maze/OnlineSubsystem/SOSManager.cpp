@@ -338,3 +338,27 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		return;
 	}
 }
+
+void USOSManager::SetExpectedPlayers(int32 Count)
+{
+	IOnlineSessionPtr Sessions = GetSessionInterface();
+	if (!Sessions.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeOSS: SetExpectedPlayers - no session interface"));
+		return;
+	}
+
+	FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(GAME_SESSION_NAME);
+	if (!NamedSession)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeOSS: SetExpectedPlayers - no named session"));
+		return;
+	}
+
+	NamedSession->SessionSettings.Set(
+		FName(TEXT("ExpectedPlayers")), Count,
+		EOnlineDataAdvertisementType::ViaOnlineService
+	);
+	Sessions->UpdateSession(GAME_SESSION_NAME, NamedSession->SessionSettings);
+	UE_LOG(LogTemp, Log, TEXT("MazeOSS: SetExpectedPlayers = %d"), Count);
+}

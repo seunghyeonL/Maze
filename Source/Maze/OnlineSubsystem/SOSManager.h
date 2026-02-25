@@ -51,6 +51,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="SOS|Session")
 	void DestroySession();
 
+	/** GameStart 시점의 실제 접속 인원을 세션 설정에 저장 */
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void SetExpectedPlayers(int32 Count);
+
 	// 마지막 검색 결과를 UI가 필요할 때 다시 가져가고 싶으면
 	UFUNCTION(BlueprintPure, Category="SOS|Session")
 	const TArray<FFoundSessionInfo>& GetLastFoundSessions() const { return LastFoundSessions; }
