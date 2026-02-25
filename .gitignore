@@ -19,6 +19,8 @@ Saved/
 .vscode/
 .idea/
 
+package/
+
 # Visual Studio cache
 .vs/
 *.ipch

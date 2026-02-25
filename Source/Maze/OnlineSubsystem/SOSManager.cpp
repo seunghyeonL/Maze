@@ -63,9 +63,9 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 	Settings.bShouldAdvertise = true;
 	Settings.bAllowJoinInProgress = true;
 
-	// Null OSS용 설정 (Steam 전환 시 변경 필요)
-	Settings.bUsesPresence = false;          // Null OSS는 Presence 미지원
-	Settings.bUseLobbiesIfAvailable = false; // Null OSS는 Lobby 미지원
+	// LAN(Null OSS) → Presence/Lobby OFF, Steam → Presence/Lobby ON
+	Settings.bUsesPresence = !bLAN;
+	Settings.bUseLobbiesIfAvailable = !bLAN;
 
 	// 맵 이름 같은 메타데이터도 올려두면 편함
 	Settings.Set(SETTING_MAPNAME, SessionMap, EOnlineDataAdvertisementType::ViaOnlineService);
@@ -136,9 +136,11 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 	SessionSearch->MaxSearchResults = FMath::Clamp(MaxResults, 1, 500);
 	SessionSearch->bIsLanQuery = bLAN;
 
-	// Null OSS는 SEARCH_LOBBIES를 지원하지 않음 - LAN 브로드캐스트로 검색
-	// Steam 전환 시 SEARCH_LOBBIES 또는 SEARCH_PRESENCE 사용
-	// SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	// Steam(bLAN=false) → Lobby 기반 검색
+	if (!bLAN)
+	{
+		SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	}
 
 	FindHandle = Sessions->AddOnFindSessionsCompleteDelegate_Handle(
 		FOnFindSessionsCompleteDelegate::CreateUObject(this, &USOSManager::HandleFindSessionsComplete)
@@ -212,12 +214,18 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 		return;
 	}
 
+	// UE 5.5+ workaround: Steam OSS가 검색 결과에 Presence/Lobby 플래그를 채워주지 않아
+	// JoinSession 시 bUsesPresence != bUseLobbiesIfAvailable 에러 발생 방지
+	FOnlineSessionSearchResult& SearchResult = SessionSearch->SearchResults[ResultIndex];
+	SearchResult.Session.SessionSettings.bUsesPresence = true;
+	SearchResult.Session.SessionSettings.bUseLobbiesIfAvailable = true;
+
 	JoinHandle = Sessions->AddOnJoinSessionCompleteDelegate_Handle(
 		FOnJoinSessionCompleteDelegate::CreateUObject(this, &USOSManager::HandleJoinSessionComplete)
 	);
 
 	const int32 LocalUserNum = 0;
-	const bool bStarted = Sessions->JoinSession(LocalUserNum, GAME_SESSION_NAME, SessionSearch->SearchResults[ResultIndex]);
+	const bool bStarted = Sessions->JoinSession(LocalUserNum, GAME_SESSION_NAME, SearchResult);
 	if (!bStarted)
 	{
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);

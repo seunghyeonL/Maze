@@ -24,11 +24,11 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "SteamSockets",
-			"Enabled": false
+			"Enabled": true
 		}
 	]
 }
