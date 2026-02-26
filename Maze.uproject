@@ -29,6 +29,10 @@
 		{
 			"Name": "SteamSockets",
 			"Enabled": false
+		},
+		{
+			"Name": "SocketSubsystemSteamIP",
+			"Enabled": true
 		}
 	]
 }
