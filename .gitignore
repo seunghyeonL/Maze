@@ -19,7 +19,8 @@ Saved/
 .vscode/
 .idea/
 
-package/
+Package_Dev/
+Package_Ship/
 
 # Visual Studio cache
 .vs/

@@ -28,7 +28,7 @@
 		},
 		{
 			"Name": "SteamSockets",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
