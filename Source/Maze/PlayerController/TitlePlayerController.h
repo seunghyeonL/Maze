@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "TimerManager.h"
 #include "TitlePlayerController.generated.h"
 
 class UTitleWidget;
@@ -38,6 +37,5 @@ private:
 	void SetupUIInput(UUserWidget* Widget);
 	void SetupGameInput();
 	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
-
-	FTimerHandle UIRefreshTimerHandle;
+	UFUNCTION() void HandleScreenChanged(EUIFlowScreen NewScreen);
 };

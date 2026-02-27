@@ -40,9 +40,10 @@ void ATitlePlayerController::BeginPlay()
 		GEngine->OnNetworkFailure().AddUObject(this, &ATitlePlayerController::HandleNetworkFailure);
 	}
 
-	if (UWorld* World = GetWorld())
+	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
 	{
-		World->GetTimerManager().SetTimer(UIRefreshTimerHandle, this, &ATitlePlayerController::RefreshUI, 0.1f, true);
+		Flow->OnScreenChanged.RemoveDynamic(this, &ATitlePlayerController::HandleScreenChanged);
+		Flow->OnScreenChanged.AddDynamic(this, &ATitlePlayerController::HandleScreenChanged);
 	}
 
 	RefreshUI();
@@ -55,9 +56,9 @@ void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GEngine->OnNetworkFailure().RemoveAll(this);
 	}
 
-	if (UWorld* World = GetWorld())
+	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
 	{
-		World->GetTimerManager().ClearTimer(UIRefreshTimerHandle);
+		Flow->OnScreenChanged.RemoveDynamic(this, &ATitlePlayerController::HandleScreenChanged);
 	}
 
 	ClearActiveWidget();
@@ -160,6 +161,11 @@ void ATitlePlayerController::SetupGameInput()
 {
 	bShowMouseCursor = false;
 	SetInputMode(FInputModeGameOnly());
+}
+
+void ATitlePlayerController::HandleScreenChanged(EUIFlowScreen NewScreen)
+{
+	RefreshUI();
 }
 
 void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
