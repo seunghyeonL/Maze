@@ -12,12 +12,17 @@ enum class EUIFlowScreen : uint8
 	Lobby UMETA(DisplayName="Lobby"),
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnScreenChangedBP, EUIFlowScreen, NewScreen);
+
 UCLASS()
 class MAZE_API UUIFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintAssignable)
+	mutable FOnScreenChangedBP OnScreenChanged;
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 	UFUNCTION(BlueprintPure, Category="UIFlow")	

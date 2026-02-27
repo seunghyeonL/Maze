@@ -12,18 +12,21 @@ void UUIFlowSubsystem::SetScreenTitle()
 {
 	Screen = EUIFlowScreen::Title;
 	bLobbyHost = false;
+	OnScreenChanged.Broadcast(Screen);
 }
 
 void UUIFlowSubsystem::SetScreenMatch()
 {
 	Screen = EUIFlowScreen::Match;
 	bLobbyHost = false;
+	OnScreenChanged.Broadcast(Screen);
 }
 
 void UUIFlowSubsystem::SetScreenLobby(bool bHost)
 {
 	Screen = EUIFlowScreen::Lobby;
 	bLobbyHost = bHost;
+	OnScreenChanged.Broadcast(Screen);
 }
 
 void UUIFlowSubsystem::SetPendingError(const FText& ErrorMessage)
