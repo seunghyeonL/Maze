@@ -27,10 +27,10 @@ protected:
 
 	// ---- Maze Configuration ----
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
-	int32 MazeWidth = 7;
+	int32 MazeWidth = 9;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
-	int32 MazeHeight = 7;
+	int32 MazeHeight = 9;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	float CellSize = 500.f;

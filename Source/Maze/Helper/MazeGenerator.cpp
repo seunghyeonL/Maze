@@ -46,12 +46,10 @@ void UMazeGenerator::GenerateMaze(
         return;
     }
 
-    const int32 NodeNum = Width * Height;
-
-    // Goal 1개 + PlayerNum개를 뽑아야 함
-    if (PlayerNum < 1 || PlayerNum + 1 > NodeNum)
+    // 최대 4인
+    if (PlayerNum < 1 || PlayerNum > 4)
     {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: Invalid PlayerNum. Need PlayerNum>=1 and PlayerNum+1 <= Width*Height"));
+    	UE_LOG(LogTemp, Error, TEXT("GenerateMaze: PlayerNum(%d) must be 1~4"), PlayerNum);
         return;
     }
 
@@ -64,25 +62,7 @@ void UMazeGenerator::GenerateMaze(
     }
 
     BuildMazeGrid(Height, Width, Grid);
-
-    // 랜덤 노드 뽑기
-    TArray<int32> Nodes;
-    Nodes.Reserve(NodeNum);
-    for (int32 i = 0; i < NodeNum; ++i)
-    {
-        Nodes.Emplace(i);
-    }
-    Algo::RandomShuffle(Nodes);
-
-    const int32 GoalNode = Nodes[0];
-
-    TArray<int32> PlayerStartNodes;
-    PlayerStartNodes.Reserve(PlayerNum);
-    for (int32 i = 1; i <= PlayerNum; ++i)
-    {
-        PlayerStartNodes.Emplace(Nodes[i]);
-    }
-
+	
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -153,19 +133,20 @@ void UMazeGenerator::GenerateMaze(
 
     // ---- 2) Goal 스폰 ----
     {
-        int32 gr, gc;
-        ToRC(GoalNode, Width, gr, gc);
+        int32 gr = Height / 2, gc = Width / 2;
+        // ToRC(GoalNode, Width, gr, gc);
 
         const FVector Pos = CellCenter(gr, gc, CellSize, 0.f);
         AActor* Goal = World->SpawnActor<AActor>(GoalActorClass, Pos, FRotator::ZeroRotator, SpawnParams);
         UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Goal spawned at %s"), *Pos.ToString());
     }
-
+	
+	TArray<TPair<int32, int32>> PlayerStartNodes{{0, 0}, {0, Width - 1}, {Height - 1, 0}, {Height - 1, Width - 1}};
+	
     // ---- 3) MazeTargetPoint 스폰 ----
-    for (int32 i = 0; i < PlayerStartNodes.Num(); ++i)
+    for (int32 i = 0; i < PlayerNum; ++i)
     {
-        int32 pr, pc;
-        ToRC(PlayerStartNodes[i], Width, pr, pc);
+    	auto [pr, pc] = PlayerStartNodes[i];
 
         const FVector Pos = CellCenter(pr, pc, CellSize, 0.f);
         AMazeTargetPoint* TP = World->SpawnActor<AMazeTargetPoint>(AMazeTargetPoint::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
