@@ -29,8 +29,10 @@ Package_Ship/
 # DotSettings
 *.DotSettings.user
 
+.agents/
 .sisyphus/
 Docs/
 AGENTS.md
+skills-lock.json
 
 nul
