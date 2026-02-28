@@ -5,6 +5,8 @@
 
 class UMazeCountdownWidget;
 class UCommonModalWidget;
+class USoundBase;
+class UAudioComponent;
 
 UENUM(BlueprintType)
 enum class EMazePhase : uint8
@@ -41,6 +43,15 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Maze|UI")
     TSubclassOf<UCommonModalWidget> ResultModalClass;
 
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Audio")
+    TObjectPtr<USoundBase> BGMSound;
+
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Audio")
+    TObjectPtr<USoundBase> WinSound;
+
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Audio")
+    TObjectPtr<USoundBase> LoseSound;
+
 private:
     UFUNCTION()
     void OnRep_Phase();
@@ -53,4 +64,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UCommonModalWidget> ResultWidgetInstance;
+
+    UPROPERTY()
+    TObjectPtr<UAudioComponent> BGMComponent;
 };

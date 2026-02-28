@@ -5,6 +5,8 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 void AMazeGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -32,31 +34,78 @@ void AMazeGameState::OnRep_Phase()
             }
         }
     }
-    else if (Phase == EMazePhase::Playing || Phase == EMazePhase::GameOver)
+    else if (Phase == EMazePhase::Playing)
     {
         if (CountdownWidgetInstance)
         {
             CountdownWidgetInstance->RemoveFromParent();
             CountdownWidgetInstance = nullptr;
         }
+
+        // Start BGM loop
+        if (BGMSound)
+        {
+            BGMComponent = UGameplayStatics::SpawnSound2D(this, BGMSound);
+            if (BGMComponent)
+            {
+                BGMComponent->bAutoDestroy = false;  // Manual control for Stop()
+            }
+        }
+    }
+    else if (Phase == EMazePhase::GameOver)
+    {
+        if (CountdownWidgetInstance)
+        {
+            CountdownWidgetInstance->RemoveFromParent();
+            CountdownWidgetInstance = nullptr;
+        }
+        // NOTE: BGM stopped in OnRep_MatchResult, not here (replication order safety)
     }
 }
 
 void AMazeGameState::OnRep_MatchResult()
 {
     if (GetNetMode() == NM_DedicatedServer) return;
-
     if (!WinnerPlayer) return;
+
+    // Stop BGM first (before sounds/modal)
+    if (BGMComponent)
+    {
+        BGMComponent->Stop();
+        BGMComponent = nullptr;
+    }
 
     APlayerController* PC = GetWorld()->GetFirstPlayerController();
     if (!PC || !ResultModalClass) return;
 
     const bool bIsWinner = (WinnerPlayer == PC->PlayerState);
-    const FText Title = bIsWinner ? FText::FromString(TEXT("승리!")) : FText::FromString(TEXT("패배"));
-    const FText Message = bIsWinner
-        ? FText::FromString(TEXT("먼저 목표에 도달했습니다!"))
-        : FText::FromString(TEXT("다음에 도전해보세요."));
 
+    // Play win/lose sound
+    USoundBase* SoundToPlay = bIsWinner ? WinSound : LoseSound;
+    if (SoundToPlay)
+    {
+        UGameplayStatics::PlaySound2D(this, SoundToPlay);
+    }
+
+    // Build result message
+    const FText Title = bIsWinner
+        ? FText::FromString(TEXT("승리!"))
+        : FText::FromString(TEXT("패배"));
+
+    FText Message;
+    if (bIsWinner)
+    {
+        Message = FText::FromString(TEXT("먼저 목표에 도달했습니다!"));
+    }
+    else
+    {
+        const FString WinnerName = WinnerPlayer->GetPlayerName().IsEmpty()
+            ? TEXT("상대방")
+            : WinnerPlayer->GetPlayerName();
+        Message = FText::FromString(FString::Printf(TEXT("%s 님이 승리했습니다."), *WinnerName));
+    }
+
+    // Show modal
     ResultWidgetInstance = CreateWidget<UCommonModalWidget>(PC, ResultModalClass);
     if (ResultWidgetInstance)
     {
