@@ -38,7 +38,7 @@ protected:
 	float TraceForwardOffset = 100.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
-	float TraceLength = 100.f;
+	float TraceLength = 50.f;
 
 private:
 	UFUNCTION()

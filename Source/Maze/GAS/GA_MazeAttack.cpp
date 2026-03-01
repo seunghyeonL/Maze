@@ -99,6 +99,10 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 		ECC_Visibility,
 		FCollisionShape::MakeSphere(TraceRadius),
 		QueryParams);
+	
+	// debug line
+	DrawDebugSphere(GetWorld(), Start, TraceRadius, 16, FColor::Green, false, 1.0f);
+	DrawDebugSphere(GetWorld(), End,   TraceRadius, 16, FColor::Red,   false, 1.0f);
 
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 	if (!SourceASC)
