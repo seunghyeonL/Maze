@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Character/Interfaces/AttackHitNotifyReceiver.h"
 #include "GAS/MazeGameplayTags.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
@@ -13,7 +14,8 @@ UGA_MazeAttack::UGA_MazeAttack()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
-	AbilityTags.AddTag(FMazeGameplayTags::Get().Ability_Attack);
+	SetAssetTags(FGameplayTagContainer({FMazeGameplayTags::Get().Ability_Attack}));
+	// AbilityTags.AddTag(FMazeGameplayTags::Get().Ability_Attack);
 	ActivationBlockedTags.AddTag(FMazeGameplayTags::Get().State_Debuff_Stun);
 }
 
@@ -28,6 +30,15 @@ void UGA_MazeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
+	}
+	
+	// RPC spam guard
+	if (AActor* Avatar = GetAvatarActorFromActorInfo(); Avatar && Avatar->HasAuthority())
+	{
+		if (Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
+		{
+			IAttackHitNotifyReceiver::Execute_ResetAttackNotifySpamGuard_Server(Avatar);
+		}
 	}
 
 	if (!AttackMontage)
@@ -83,9 +94,13 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 	{
 		return;
 	}
-
+	
 	const FVector Start = Avatar->GetActorLocation() + Avatar->GetActorForwardVector() * TraceForwardOffset;
 	const FVector End = Start + Avatar->GetActorForwardVector() * TraceLength;
+	
+	// debug line
+	DrawDebugSphere(GetWorld(), Start, TraceRadius, 16, FColor::Green, false, 1.0f);
+	DrawDebugSphere(GetWorld(), End,   TraceRadius, 16, FColor::Red,   false, 1.0f);
 
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(Avatar);
@@ -100,10 +115,6 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 		FCollisionShape::MakeSphere(TraceRadius),
 		QueryParams);
 	
-	// debug line
-	DrawDebugSphere(GetWorld(), Start, TraceRadius, 16, FColor::Green, false, 1.0f);
-	DrawDebugSphere(GetWorld(), End,   TraceRadius, 16, FColor::Red,   false, 1.0f);
-
 	UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo();
 	if (!SourceASC)
 	{
@@ -161,7 +172,7 @@ void UGA_MazeAttack::EndAbilityCleanly()
 	{
 		return;
 	}
-
+	
 	const FGameplayAbilitySpecHandle Handle = GetCurrentAbilitySpecHandle();
 	const FGameplayAbilityActorInfo* ActorInfo = GetCurrentActorInfo();
 	const FGameplayAbilityActivationInfo ActivationInfo = GetCurrentActivationInfo();

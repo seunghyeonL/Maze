@@ -12,6 +12,10 @@ UCLASS()
 class MAZE_API UAN_MazeAttackHitNotify : public UAnimNotify
 {
 	GENERATED_BODY()
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attack")
+	int32 NotifyId = 0;
 
 public:
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
