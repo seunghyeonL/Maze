@@ -33,6 +33,9 @@ struct MAZE_API FMazeGameplayTags
 
 	// Event tags
 	FGameplayTag Event_Montage_AttackHit;
+	
+	// Gameplay Cue Tags
+	FGameplayTag GameplayCue_Actor_ElectricTrail;
 
 private:
 	static FMazeGameplayTags GameplayTags;

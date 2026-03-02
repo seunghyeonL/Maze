@@ -27,4 +27,6 @@ void FMazeGameplayTags::InitializeNativeTags()
 		FName("Event.Montage.AttackHit"),
 		FString("Sent by AnimNotify at attack hit window")
 	);
+
+	GameplayTags.GameplayCue_Actor_ElectricTrail = Manager.RequestGameplayTag(TEXT("GameplayCue.Actor.ElectricTrail"));
 }
