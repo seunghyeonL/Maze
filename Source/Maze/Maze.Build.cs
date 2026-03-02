@@ -15,6 +15,7 @@ public class Maze : ModuleRules
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
 			"UMG",
+			"Niagara", "NiagaraCore",
 			"OnlineSubsystem", "OnlineSubsystemUtils",
 			"GameplayAbilities", "GameplayTags", "GameplayTasks"
 		});
