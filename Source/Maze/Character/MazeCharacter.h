@@ -34,7 +34,7 @@ protected:
     TObjectPtr<UStaticMeshComponent> WeaponMeshComponent;
 
     UPROPERTY(EditDefaultsOnly, Category="Weapon")
-    FName WeaponSocketName = TEXT("hand_r");
+    FName WeaponSocketName = TEXT("HandGrip_R");
 
     UPROPERTY(EditDefaultsOnly, Category="GAS")
     TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
