@@ -135,11 +135,12 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 			continue;
 		}
 
-		if (TargetASC->HasMatchingGameplayTag(FMazeGameplayTags::Get().State_Invincible))
-		{
-			UE_LOG(LogTemp, Log, TEXT("GA_MazeAttack: Hit %s but they are invincible, skipping"), *HitActor->GetName());
-			continue;
-		}
+		/* GE 면역설정으로 대체 */
+		// if (TargetASC->HasMatchingGameplayTag(FMazeGameplayTags::Get().State_Invincible))
+		// {
+		// 	UE_LOG(LogTemp, Log, TEXT("GA_MazeAttack: Hit %s but they are invincible, skipping"), *HitActor->GetName());
+		// 	continue;
+		// }
 
 		if (StunEffectClass)
 		{
