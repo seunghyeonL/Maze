@@ -29,4 +29,19 @@ void FMazeGameplayTags::InitializeNativeTags()
 	);
 
 	GameplayTags.GameplayCue_Actor_ElectricTrail = Manager.RequestGameplayTag(TEXT("GameplayCue.Actor.ElectricTrail"));
+
+	GameplayTags.StateTree_Event_Stunned = Manager.AddNativeGameplayTag(
+		FName("StateTree.Event.Stunned"),
+		FString("Sent to StateTree when stun tag applied")
+	);
+
+	GameplayTags.StateTree_Event_StunEnded = Manager.AddNativeGameplayTag(
+		FName("StateTree.Event.StunEnded"),
+		FString("Sent to StateTree when stun tag removed")
+	);
+
+	GameplayTags.StateTree_Event_PlayerSpotted = Manager.AddNativeGameplayTag(
+		FName("StateTree.Event.PlayerSpotted"),
+		FString("Sent to StateTree when player detected by perception")
+	);
 }

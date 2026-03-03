@@ -33,9 +33,17 @@
 			"Name": "SteamSockets",
 			"Enabled": false
 		},
-		{
-			"Name": "SocketSubsystemSteamIP",
-			"Enabled": false
-		}
+	{
+		"Name": "SocketSubsystemSteamIP",
+		"Enabled": false
+	},
+	{
+		"Name": "StateTree",
+		"Enabled": true
+	},
+	{
+		"Name": "GameplayStateTree",
+		"Enabled": true
+	}
 	]
 }

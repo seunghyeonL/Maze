@@ -17,7 +17,8 @@ public class Maze : ModuleRules
 			"UMG",
 			"Niagara", "NiagaraCore",
 			"OnlineSubsystem", "OnlineSubsystemUtils",
-			"GameplayAbilities", "GameplayTags", "GameplayTasks"
+			"GameplayAbilities", "GameplayTags", "GameplayTasks",
+			"AIModule", "NavigationSystem", "StateTreeModule", "GameplayStateTreeModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

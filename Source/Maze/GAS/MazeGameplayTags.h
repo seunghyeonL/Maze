@@ -33,6 +33,11 @@ struct MAZE_API FMazeGameplayTags
 
 	// Event tags
 	FGameplayTag Event_Montage_AttackHit;
+
+	// StateTree Event tags
+	FGameplayTag StateTree_Event_Stunned;
+	FGameplayTag StateTree_Event_StunEnded;
+	FGameplayTag StateTree_Event_PlayerSpotted;
 	
 	// Gameplay Cue Tags
 	FGameplayTag GameplayCue_Actor_ElectricTrail;
