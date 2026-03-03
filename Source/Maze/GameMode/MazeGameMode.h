@@ -40,6 +40,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Maze")
 	TSubclassOf<AActor> GoalActorClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Maze")
+	TSubclassOf<APawn> BotClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Maze")
+	int32 BotCount = 4;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	float ReturnToLobbyDelay = 3.0f;

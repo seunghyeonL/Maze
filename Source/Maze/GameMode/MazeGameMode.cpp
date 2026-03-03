@@ -71,7 +71,7 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 	const int32 PlayerNum = ArrivedPlayers.Num();
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze %dx%d Players=%d CellSize=%.0f"),
 		MazeWidth, MazeHeight, PlayerNum, CellSize);
-	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize, WallClass, GoalActorClass);
+	UMazeGenerator::GenerateMaze(this, MazeWidth, MazeHeight, PlayerNum, CellSize, WallClass, GoalActorClass, BotClass, BotCount);
 
 	// 스폰된 MazeTargetPoint 수집, PlayerIndex 기준 정렬
 	MazeTargetPoints.Reset();
