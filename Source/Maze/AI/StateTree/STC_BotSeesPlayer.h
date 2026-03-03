@@ -5,7 +5,6 @@
 #include "Conditions/StateTreeAIConditionBase.h"
 #include "STC_BotSeesPlayer.generated.h"
 
-class ABotAIController;
 class AAIController;
 
 USTRUCT(DisplayName="Bot Sees Player")
@@ -16,9 +15,6 @@ struct MAZE_API FSTC_BotSeesPlayerInstanceData
 	UPROPERTY(EditAnywhere, Category=Context)
 	TObjectPtr<AAIController> AIController = nullptr;
 
-	/** Output: the player actor that was spotted (used by Combat task) */
-	UPROPERTY(EditAnywhere, Category=Output)
-	TObjectPtr<AActor> SeenPlayer = nullptr;
 };
 
 USTRUCT(DisplayName="Bot Sees Player")

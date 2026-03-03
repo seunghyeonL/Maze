@@ -27,10 +27,6 @@ struct MAZE_API FSTT_BotCombatInstanceData
 	UPROPERTY(EditAnywhere, Category=Context)
 	TObjectPtr<AActor> Actor = nullptr;
 
-	/** Input: the player to chase (bound from STC_BotSeesPlayer's SeenPlayer output) */
-	UPROPERTY(EditAnywhere, Category=Input)
-	TObjectPtr<AActor> TargetPlayer = nullptr;
-
 	/** The attack ability class to activate (set to GA_MazeAttack in BP) */
 	UPROPERTY(EditAnywhere, Category=Parameter)
 	TSubclassOf<UGameplayAbility> AttackAbilityClass = nullptr;

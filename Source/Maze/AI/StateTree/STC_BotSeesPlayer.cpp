@@ -18,7 +18,5 @@ bool FSTC_BotSeesPlayer::TestCondition(FStateTreeExecutionContext& Context) cons
 		return false;
 	}
 
-	// Write to output so Combat task can use it
-	InstanceData.SeenPlayer = Player;
 	return true;
 }

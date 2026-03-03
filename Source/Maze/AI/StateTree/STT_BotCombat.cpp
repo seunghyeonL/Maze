@@ -1,5 +1,6 @@
 #include "AI/StateTree/STT_BotCombat.h"
 #include "AIController.h"
+#include "AI/BotAIController.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -11,11 +12,15 @@ EStateTreeRunStatus FSTT_BotCombat::EnterState(FStateTreeExecutionContext& Conte
 	InstanceData.Phase = EBotCombatPhase::Chase;
 	InstanceData.DelayTimer = 0.f;
 
+	// Get target player directly from the AI controller
+	ABotAIController* BotController = Cast<ABotAIController>(InstanceData.AIController);
+	AActor* TargetPlayer = BotController ? BotController->GetPerceivedPlayer() : nullptr;
+
 	// Start chasing the target
-	if (InstanceData.AIController && InstanceData.TargetPlayer)
+	if (InstanceData.AIController && TargetPlayer)
 	{
 		FAIMoveRequest MoveRequest;
-		MoveRequest.SetGoalActor(InstanceData.TargetPlayer);
+		MoveRequest.SetGoalActor(TargetPlayer);
 		MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange);
 		InstanceData.AIController->MoveTo(MoveRequest);
 	}
@@ -38,7 +43,11 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
-	if (!InstanceData.AIController || !InstanceData.Actor || !InstanceData.TargetPlayer)
+	// Get target player directly from the AI controller
+	ABotAIController* BotController = Cast<ABotAIController>(InstanceData.AIController);
+	AActor* TargetPlayer = BotController ? BotController->GetPerceivedPlayer() : nullptr;
+
+	if (!InstanceData.AIController || !InstanceData.Actor || !TargetPlayer)
 	{
 		return EStateTreeRunStatus::Failed;
 	}
@@ -50,7 +59,7 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 			// Check if we're close enough to attack
 			const float DistToTarget = FVector::Dist(
 				InstanceData.Actor->GetActorLocation(),
-				InstanceData.TargetPlayer->GetActorLocation()
+				TargetPlayer->GetActorLocation()
 			);
 
 			if (DistToTarget <= InstanceData.AttackRange)
@@ -93,10 +102,10 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 			InstanceData.DelayTimer = 0.f;
 
 			// Re-chase if target moved
-			if (InstanceData.TargetPlayer)
+			if (TargetPlayer)
 			{
 				FAIMoveRequest MoveRequest;
-				MoveRequest.SetGoalActor(InstanceData.TargetPlayer);
+				MoveRequest.SetGoalActor(TargetPlayer);
 				MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange);
 				InstanceData.AIController->MoveTo(MoveRequest);
 			}
