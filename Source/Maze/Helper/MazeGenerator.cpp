@@ -3,6 +3,7 @@
 #include "MazeGenerator.h"
 
 #include "Algo/RandomShuffle.h"
+#include "GameFramework/Pawn.h"
 #include "../Actor/MazeTargetPoint.h"
 
 void UMazeGenerator::GenerateMaze(
@@ -12,7 +13,9 @@ void UMazeGenerator::GenerateMaze(
 	int32 PlayerNum,
 	float CellSize,
 	TSubclassOf<AActor> WallClass,
-	TSubclassOf<AActor> GoalActorClass
+	TSubclassOf<AActor> GoalActorClass,
+	TSubclassOf<APawn> BotClass,
+	int32 BotCount
 	)
 {
 	if (!WorldContextObject)
@@ -156,6 +159,27 @@ void UMazeGenerator::GenerateMaze(
         }
         UE_LOG(LogTemp, Log, TEXT("MazeGenerator: MazeTargetPoint[%d] spawned at %s"), i, *Pos.ToString());
     }
+	
+	// ---- 4) Bot 스폰 ----
+	if (BotClass && BotCount > 0)
+	{
+		// 4개 코너 근처 스폰 좌표 (미로 크기에 비례)
+		TArray<TPair<int32, int32>> BotStartNodes = {
+			{Height / 4,              Width / 4},
+			{Height - 1 - Height / 4, Width / 4},
+			{Height / 4,              Width - 1 - Width / 4},
+			{Height - 1 - Height / 4, Width - 1 - Width / 4},
+		};
+	
+		const int32 ActualBotCount = FMath::Min(BotCount, BotStartNodes.Num());
+		for (int32 i = 0; i < ActualBotCount; ++i)
+		{
+			auto [br, bc] = BotStartNodes[i];
+			const FVector Pos = CellCenter(br, bc, CellSize, 0.f);
+			World->SpawnActor<APawn>(BotClass, Pos, FRotator::ZeroRotator, SpawnParams);
+			UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Bot[%d] spawned at %s"), i, *Pos.ToString());
+		}
+	}
 }
 
 void UMazeGenerator::BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid)

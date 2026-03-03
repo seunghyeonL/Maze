@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Pawn.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MazeGenerator.generated.h"
 
@@ -55,7 +56,9 @@ public:
 		int32 PlayerNum,
 		float CellSize,
 		TSubclassOf<AActor> WallClass,
-		TSubclassOf<AActor> GoalActorClass);
+		TSubclassOf<AActor> GoalActorClass,
+		TSubclassOf<APawn> BotClass = nullptr,
+		int32 BotCount = 4);
 	
 private:
 	static void BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid);
