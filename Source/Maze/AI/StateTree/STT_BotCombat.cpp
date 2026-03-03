@@ -5,12 +5,18 @@
 #include "AbilitySystemComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "StateTreeExecutionContext.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 EStateTreeRunStatus FSTT_BotCombat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	InstanceData.Phase = EBotCombatPhase::Chase;
 	InstanceData.DelayTimer = 0.f;
+	
+	if (auto* MovementComponent = InstanceData.Actor->FindComponentByClass<UCharacterMovementComponent>())
+	{
+		MovementComponent->MaxWalkSpeed = InstanceData.DesiredSpeed;
+	}
 
 	// Get target player directly from the AI controller
 	ABotAIController* BotController = Cast<ABotAIController>(InstanceData.AIController);

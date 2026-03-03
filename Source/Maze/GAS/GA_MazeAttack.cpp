@@ -117,7 +117,7 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 		Start,
 		End,
 		FQuat::Identity,
-		ECC_Visibility,
+		ECC_Pawn,
 		FCollisionShape::MakeSphere(TraceRadius),
 		QueryParams);
 	

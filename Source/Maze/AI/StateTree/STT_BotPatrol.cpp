@@ -2,9 +2,17 @@
 #include "AIController.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "StateTreeExecutionContext.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 EStateTreeRunStatus FSTT_BotPatrol::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	
+	if (auto* MovementComponent = InstanceData.Actor->FindComponentByClass<UCharacterMovementComponent>())
+	{
+		MovementComponent->MaxWalkSpeed = InstanceData.DesiredSpeed;
+	}
+	
 	PickNextPatrolTarget(Context);
 	return EStateTreeRunStatus::Running;
 }
@@ -73,7 +81,7 @@ void FSTT_BotPatrol::PickNextPatrolTarget(FStateTreeExecutionContext& Context) c
 	{
 		// Raycast half-cell distance to detect walls between cells
 		FHitResult HitResult;
-		const FVector TraceEnd = CurrentLocation + Dir * 0.5f;
+		const FVector TraceEnd = CurrentLocation + Dir;
 		const bool bHit = World->LineTraceSingleByChannel(
 			HitResult,
 			CurrentLocation,

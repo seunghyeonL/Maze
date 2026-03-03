@@ -18,11 +18,14 @@ struct MAZE_API FSTT_BotPatrolInstanceData
 	TObjectPtr<AActor> Actor = nullptr;
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
-	float CellSize = 400.f;
+	float CellSize = 500.f;
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
 	float AcceptanceRadius = 50.f;
 
+	UPROPERTY(EditAnywhere, Category=Parameter)
+	float DesiredSpeed = 300.f;
+	
 	UPROPERTY()
 	FVector CurrentTargetLocation = FVector::ZeroVector;
 

@@ -40,6 +40,9 @@ struct MAZE_API FSTT_BotCombatInstanceData
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
 	float AttackCooldownDuration = 1.0f;
+	
+	UPROPERTY(EditAnywhere, Category=Parameter)
+	float DesiredSpeed = 600.f;
 
 	UPROPERTY()
 	float DelayTimer = 0.f;
