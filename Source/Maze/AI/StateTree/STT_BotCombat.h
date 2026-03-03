@@ -14,6 +14,7 @@ enum class EBotCombatPhase : uint8
 	Chase,
 	PreAttack,
 	Attacking,
+	AttackCooldown,
 };
 
 USTRUCT(DisplayName="Bot Combat")
@@ -36,6 +37,9 @@ struct MAZE_API FSTT_BotCombatInstanceData
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
 	float PreAttackDelay = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category=Parameter)
+	float AttackCooldownDuration = 1.0f;
 
 	UPROPERTY()
 	float DelayTimer = 0.f;

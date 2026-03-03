@@ -1,5 +1,6 @@
 #include "Character/BotCharacter.h"
 #include "AI/BotAIController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 ABotCharacter::ABotCharacter()
@@ -12,6 +13,10 @@ ABotCharacter::ABotCharacter()
 
 	// AI 컨트롤러 클래스 설정 — ABotAIController가 StateTree + Perception을 담당
 	AIControllerClass = ABotAIController::StaticClass();
+
+	// 이동 방향으로 자동 회전 (SetFocus가 없을 때 Patrol 상태에서 적용)
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);
 }
 
 void ABotCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -19,9 +19,10 @@ EStateTreeRunStatus FSTT_BotCombat::EnterState(FStateTreeExecutionContext& Conte
 	// Start chasing the target
 	if (InstanceData.AIController && TargetPlayer)
 	{
+		InstanceData.AIController->SetFocus(TargetPlayer);
 		FAIMoveRequest MoveRequest;
 		MoveRequest.SetGoalActor(TargetPlayer);
-		MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange);
+		MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
 		InstanceData.AIController->MoveTo(MoveRequest);
 	}
 
@@ -34,6 +35,7 @@ void FSTT_BotCombat::ExitState(FStateTreeExecutionContext& Context, const FState
 	if (InstanceData.AIController)
 	{
 		InstanceData.AIController->StopMovement();
+		InstanceData.AIController->ClearFocus(EAIFocusPriority::Gameplay);
 	}
 	InstanceData.Phase = EBotCombatPhase::Chase;
 	InstanceData.DelayTimer = 0.f;
@@ -69,6 +71,18 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 				InstanceData.Phase = EBotCombatPhase::PreAttack;
 				InstanceData.DelayTimer = 0.f;
 			}
+			else
+			{
+				// MoveTo가 AcceptanceRadius에서 '도착' 판정 후 멈출 수 있음 → 재이동
+				const EPathFollowingStatus::Type MoveStatus = InstanceData.AIController->GetMoveStatus();
+				if (MoveStatus != EPathFollowingStatus::Moving)
+				{
+					FAIMoveRequest MoveRequest;
+					MoveRequest.SetGoalActor(TargetPlayer);
+					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
+					InstanceData.AIController->MoveTo(MoveRequest);
+				}
+			}
 			break;
 		}
 
@@ -92,22 +106,36 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 					UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent();
 					if (ASC)
 					{
-						ASC->TryActivateAbilityByClass(InstanceData.AttackAbilityClass);
+						const bool bActivated = ASC->TryActivateAbilityByClass(InstanceData.AttackAbilityClass);
+						if (!bActivated)
+						{
+							UE_LOG(LogTemp, Warning, TEXT("STT_BotCombat: Failed to activate attack ability"));
+						}
 					}
 				}
 			}
 
-			// Return to chase phase
-			InstanceData.Phase = EBotCombatPhase::Chase;
+			// 쿨다운으로 전환 (즉시 Chase 복귀 방지 — 몽타주 인터럽트 방지)
+			InstanceData.Phase = EBotCombatPhase::AttackCooldown;
 			InstanceData.DelayTimer = 0.f;
+			break;
+		}
 
-			// Re-chase if target moved
-			if (TargetPlayer)
+	case EBotCombatPhase::AttackCooldown:
+		{
+			InstanceData.DelayTimer += DeltaTime;
+			if (InstanceData.DelayTimer >= InstanceData.AttackCooldownDuration)
 			{
-				FAIMoveRequest MoveRequest;
-				MoveRequest.SetGoalActor(TargetPlayer);
-				MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange);
-				InstanceData.AIController->MoveTo(MoveRequest);
+				// 쿨다운 완료 → Chase 복귀 + 재이동
+				InstanceData.Phase = EBotCombatPhase::Chase;
+				InstanceData.DelayTimer = 0.f;
+				if (TargetPlayer)
+				{
+					FAIMoveRequest MoveRequest;
+					MoveRequest.SetGoalActor(TargetPlayer);
+					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
+					InstanceData.AIController->MoveTo(MoveRequest);
+				}
 			}
 			break;
 		}
