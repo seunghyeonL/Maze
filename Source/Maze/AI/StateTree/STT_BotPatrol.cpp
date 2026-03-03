@@ -79,7 +79,7 @@ void FSTT_BotPatrol::PickNextPatrolTarget(FStateTreeExecutionContext& Context) c
 
 	for (const FVector& Dir : Directions)
 	{
-		// Raycast half-cell distance to detect walls between cells
+		// Raycast full-cell distance to detect walls between cells
 		FHitResult HitResult;
 		const FVector TraceEnd = CurrentLocation + Dir;
 		const bool bHit = World->LineTraceSingleByChannel(
