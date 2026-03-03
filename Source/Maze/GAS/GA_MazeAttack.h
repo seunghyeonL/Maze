@@ -56,5 +56,8 @@ private:
 	UFUNCTION()
 	void OnAttackHitEvent(FGameplayEventData Payload);
 
+	UFUNCTION()
+	void OnStunTagAdded();
+
 	void EndAbilityCleanly();
 };

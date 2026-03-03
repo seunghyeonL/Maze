@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayTag.h"
 #include "Character/Interfaces/AttackHitNotifyReceiver.h"
 #include "GAS/MazeGameplayTags.h"
 #include "GameFramework/Actor.h"
@@ -59,6 +60,11 @@ void UGA_MazeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		this, FMazeGameplayTags::Get().Event_Montage_AttackHit, nullptr, true, false);
 	EventTask->EventReceived.AddDynamic(this, &UGA_MazeAttack::OnAttackHitEvent);
 	EventTask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayTagAdded* StunWatchTask = UAbilityTask_WaitGameplayTagAdded::WaitGameplayTagAdd(
+		this, FMazeGameplayTags::Get().State_Debuff_Stun);
+	StunWatchTask->Added.AddDynamic(this, &UGA_MazeAttack::OnStunTagAdded);
+	StunWatchTask->ReadyForActivation();
 }
 
 void UGA_MazeAttack::OnMontageCompleted()
@@ -165,6 +171,11 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 			}
 		}
 	}
+}
+
+void UGA_MazeAttack::OnStunTagAdded()
+{
+	EndAbilityCleanly();
 }
 
 void UGA_MazeAttack::EndAbilityCleanly()
