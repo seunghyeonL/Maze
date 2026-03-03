@@ -26,7 +26,7 @@ ABotAIController::ABotAIController()
     SightConfig->PeripheralVisionAngleDegrees = 60.f;
     SightConfig->SetMaxAge(5.f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
+    SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
     BotPerceptionComponent->ConfigureSense(*SightConfig);
