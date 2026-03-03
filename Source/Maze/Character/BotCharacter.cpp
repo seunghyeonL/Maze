@@ -1,6 +1,6 @@
 #include "Character/BotCharacter.h"
-// ABotAIController.h는 Wave 2 완료 후 추가 예정
-// 현재는 전방 선언만으로 AIControllerClass 설정 가능
+#include "AI/BotAIController.h"
+
 
 ABotCharacter::ABotCharacter()
 {
@@ -11,7 +11,7 @@ ABotCharacter::ABotCharacter()
 	bUseControllerRotationYaw = false;
 
 	// AIControllerClass는 BP에서 설정하거나 BotAIController 완성 후 추가
-	// AIControllerClass = ABotAIController::StaticClass(); // Wave 2 후 활성화
+	AIControllerClass = ABotAIController::StaticClass();
 }
 
 void ABotCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
