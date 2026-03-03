@@ -10,7 +10,7 @@ ABotCharacter::ABotCharacter()
 	// AI는 컨트롤러 Yaw 회전 사용 안 함
 	bUseControllerRotationYaw = false;
 
-	// AIControllerClass는 BP에서 설정하거나 BotAIController 완성 후 추가
+	// AI 컨트롤러 클래스 설정 — ABotAIController가 StateTree + Perception을 담당
 	AIControllerClass = ABotAIController::StaticClass();
 }
 

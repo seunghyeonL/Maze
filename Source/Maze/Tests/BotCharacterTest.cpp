@@ -1,3 +1,4 @@
+#include "AIController.h"
 #include "CoreMinimal.h"
 #include "Misc/AutomationTest.h"
 #include "Character/BotCharacter.h"
@@ -13,7 +14,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FBotCharacterInheritanceTest,
     "Maze.AI.BotCharacter.InheritsFromMazeCharacter",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter
 )
 bool FBotCharacterInheritanceTest::RunTest(const FString& Parameters)
 {
@@ -36,7 +37,7 @@ bool FBotCharacterInheritanceTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FBotAIControllerTeamTest,
     "Maze.AI.BotAIController.TeamId",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter
 )
 bool FBotAIControllerTeamTest::RunTest(const FString& Parameters)
 {
@@ -46,6 +47,18 @@ bool FBotAIControllerTeamTest::RunTest(const FString& Parameters)
         ABotAIController::StaticClass()->IsChildOf(AAIController::StaticClass())
     );
 
+    // Verify team ID is 1 (bot team, distinct from player team 0)
+    const ABotAIController* CDO = GetDefault<ABotAIController>();
+    if (CDO)
+    {
+        const FGenericTeamId TeamId = CDO->GetGenericTeamId();
+        TestEqual(
+            TEXT("ABotAIController team ID should be 1 (bot team)"),
+            TeamId.GetId(),
+            (uint8)1
+        );
+    }
+
     return true;
 }
 
@@ -53,7 +66,7 @@ bool FBotAIControllerTeamTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FMazeGameplayTagsStateTreeTest,
     "Maze.AI.MazeGameplayTags.StateTreeEventTags",
-    EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter
+    EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter
 )
 bool FMazeGameplayTagsStateTreeTest::RunTest(const FString& Parameters)
 {
