@@ -16,7 +16,7 @@ UGA_MazeAttack::UGA_MazeAttack()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 
 	SetAssetTags(FGameplayTagContainer({FMazeGameplayTags::Get().Ability_Attack}));
-	// AbilityTags.AddTag(FMazeGameplayTags::Get().Ability_Attack);
+	// AbilityTags.AddTag(FMazeGameplayTags::Get().Ability_Attack); - Deprecated
 	ActivationBlockedTags.AddTag(FMazeGameplayTags::Get().State_Debuff_Stun);
 }
 
