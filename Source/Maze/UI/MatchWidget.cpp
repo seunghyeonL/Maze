@@ -174,7 +174,7 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
-		SOSManager->CreateSession(4, TEXT("/Game/Levels/TitleLevel"), true);
+		SOSManager->CreateSession(MaxPlayerNum, TEXT("/Game/Levels/TitleLevel"), true);
 	}
 	else
 	{

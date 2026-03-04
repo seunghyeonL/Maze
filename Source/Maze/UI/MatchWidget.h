@@ -88,4 +88,6 @@ private:
 	void CheckPendingError();
 
 	FTimerHandle PendingErrorTimerHandle;
+	
+	int MaxPlayerNum = 4;
 };
