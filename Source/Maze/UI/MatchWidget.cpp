@@ -175,7 +175,7 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
-		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeSettings>()->GetTitleLevelPath(), true);
+		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeSettings>()->GetTitleLevelPath(), false);
 	}
 	else
 	{
@@ -189,7 +189,7 @@ void UMatchWidget::HandleFindLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("로비 검색 중...")));
-		SOSManager->FindSessions(50, true);
+		SOSManager->FindSessions(50, false);
 	}
 	else
 	{
@@ -265,7 +265,7 @@ void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSession
 	{
 		ShowAlert(
 			FText::FromString(TEXT("오류")),
-			FText::FromString(TEXT("방 검색에 실패했습니다."))
+			FText::FromString(TEXT("로비 검색에 실패했습니다."))
 		);
 		return;
 	}
@@ -288,7 +288,7 @@ void UMatchWidget::HandleSessionJoined(bool bSuccess)
 		// 상태만 설정 — 브로드캐스트 없이 (구 World에서 premature LobbyWidget 생성 방지)
 		// 새 World의 TitlePlayerController::BeginPlay → RefreshUI()가 Screen=Lobby를 읽어 LobbyWidget 생성
 		UIFlowSubsystem->SetScreenLobbyForTravel(false);
-		// HideLoading() 호출 않음 — "방 참가 중..." 로드 유지
+		// HideLoading() 호출 않음 — "로비 참가 중..." 로드 유지
 		// RemoveFromParent() 호출 않음 — ClientTravel 시 World 파괴와 함께 자동 정리
 	}
 	else if (!bSuccess)
@@ -296,7 +296,7 @@ void UMatchWidget::HandleSessionJoined(bool bSuccess)
 		HideLoading();
 		ShowAlert(
 			FText::FromString(TEXT("오류")),
-			FText::FromString(TEXT("방 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))
+			FText::FromString(TEXT("로비 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))
 		);
 	}
 }

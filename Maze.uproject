@@ -27,23 +27,23 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "SteamSockets",
 			"Enabled": false
 		},
-	{
-		"Name": "SocketSubsystemSteamIP",
-		"Enabled": false
-	},
-	{
-		"Name": "StateTree",
-		"Enabled": true
-	},
-	{
-		"Name": "GameplayStateTree",
-		"Enabled": true
-	}
+		{
+			"Name": "SocketSubsystemSteamIP",
+			"Enabled": true
+		},
+		{
+			"Name": "StateTree",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayStateTree",
+			"Enabled": true
+		}
 	]
 }
