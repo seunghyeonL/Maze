@@ -7,8 +7,6 @@ AMazeLobbyPlayerState::AMazeLobbyPlayerState()
 	bReplicates = true;
 }
 
-
-
 void AMazeLobbyPlayerState::RequestSetReady(bool bNewReady)
 {
 	if (HasAuthority())
@@ -24,8 +22,6 @@ void AMazeLobbyPlayerState::RequestSetReady(bool bNewReady)
 	ServerSetReady(bNewReady);
 }
 
-
-
 void AMazeLobbyPlayerState::ServerSetReady_Implementation(bool bNewReady)
 {
 	if (bIsReady != bNewReady)
@@ -35,14 +31,10 @@ void AMazeLobbyPlayerState::ServerSetReady_Implementation(bool bNewReady)
 	}
 }
 
-
-
 void AMazeLobbyPlayerState::OnRep_IsReady()
 {
 	OnReadyChanged.Broadcast(this, bIsReady);
 }
-
-
 
 void AMazeLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

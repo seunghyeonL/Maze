@@ -18,34 +18,22 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Lobby")
 	bool IsReady() const { return bIsReady; }
-
-
-
+	
 	UFUNCTION(BlueprintCallable, Category="Lobby")
 	void RequestSetReady(bool bNewReady);
-
-
-
+	
 	UPROPERTY(BlueprintAssignable, Category="Lobby")
 	FOnReadyChangedBP OnReadyChanged;
-
-
 
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_IsReady, BlueprintReadOnly, Category="Lobby")
 	bool bIsReady = false;
-
-
 
 	UFUNCTION()
 	void OnRep_IsReady();
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetReady(bool bNewReady);
-
-
-
-
-
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
