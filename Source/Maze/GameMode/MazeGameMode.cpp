@@ -95,9 +95,9 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 	{
 		MazeTargetPoints.Add(*It);
 	}
-	MazeTargetPoints.Sort([](const TObjectPtr<AMazeTargetPoint>& A, const TObjectPtr<AMazeTargetPoint>& B)
+	MazeTargetPoints.Sort([](const AMazeTargetPoint& A, const AMazeTargetPoint& B)
 	{
-		return A->PlayerIndex < B->PlayerIndex;
+		return A.PlayerIndex < B.PlayerIndex;
 	});
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Found %d MazeTargetPoints"), MazeTargetPoints.Num());
 
