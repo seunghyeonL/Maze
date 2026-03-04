@@ -17,7 +17,6 @@ public:
     UMazeSettings();
 
     virtual FName GetCategoryName() const override { return FName(TEXT("Game")); }
-    virtual FText GetSectionText() const override;
 
     // ---- Map Paths ----
     UPROPERTY(config, EditAnywhere, BlueprintReadOnly, Category="Maps",
