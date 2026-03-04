@@ -5,6 +5,7 @@
 #include "OnlineSubsystem/SOSManager.h"
 #include "UIFlowSubsystem.h"
 #include "LoadingOverlayWidget.h"
+#include "Settings/MazeSettings.h"
 
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
@@ -230,7 +231,7 @@ void ULobbyWidget::HandleGameStartClicked()
 	}
 
 	const FString SelectedSize = MazeSizeComboBox ? MazeSizeComboBox->GetSelectedOption() : TEXT("9");
-	const FString TravelURL = FString::Printf(TEXT("/Game/Levels/MazeLevel?listen?MazeSize=%s"), *SelectedSize);
+	const FString TravelURL = FString::Printf(TEXT("%s?listen?MazeSize=%s"), *GetDefault<UMazeSettings>()->GetMazeLevelPath(), *SelectedSize);
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d, MazeSize=%s)"),
 		GameState->PlayerArray.Num(), *SelectedSize);
 	World->ServerTravel(*TravelURL);
@@ -240,7 +241,7 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
 
-	static const FString TitleLevelUrl = TEXT("/Game/Levels/TitleLevel");
+	const FString TitleLevelUrl = GetDefault<UMazeSettings>()->GetTitleLevelPath();
 
 	UWorld* World = GetWorld();
 	const bool bHost = IsLobbyHost();

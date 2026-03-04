@@ -78,7 +78,7 @@ private:
 
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
-	UPROPERTY() FString PendingSessionMap = TEXT("/Game/Maps/Lobby"); // 기본값
+	UPROPERTY() FString PendingSessionMap;
 	UPROPERTY() TArray<FFoundSessionInfo> LastFoundSessions;
 	UPROPERTY() bool bHosting = false;
 

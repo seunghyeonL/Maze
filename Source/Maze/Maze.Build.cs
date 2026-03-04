@@ -21,7 +21,7 @@ public class Maze : ModuleRules
 			"AIModule", "NavigationSystem", "StateTreeModule", "GameplayStateTreeModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "DeveloperSettings" });
 		
 		DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
 
