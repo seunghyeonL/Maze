@@ -9,6 +9,10 @@
 #include "GameplayAbilitySpec.h"
 #include "InputAction.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
 
 AMazeCharacter::AMazeCharacter()
 {
@@ -70,6 +74,24 @@ void AMazeCharacter::PossessedBy(AController* NewController)
     ASC->InitAbilityActorInfo(this, this);
     GiveDefaultAbilities();
     RegisterStunCallback();
+
+    // 봇 제외: APlayerController에게만 색 배정
+    if (Cast<APlayerController>(NewController))
+    {
+        if (AGameStateBase* GS = GetWorld()->GetGameState())
+        {
+            PlayerColorIndex = GS->PlayerArray.IndexOfByPredicate(
+                [NewController](const APlayerState* PS)
+                {
+                    return PS && PS->GetOwningController() == NewController;
+                });
+            if (PlayerColorIndex < 0)
+            {
+                PlayerColorIndex = GS->PlayerArray.Num() - 1;
+            }
+            ApplyPlayerColor(); // Listen Server에서는 OnRep이 호출되지 않으므로 직접 호출
+        }
+    }
 }
 
 void AMazeCharacter::OnRep_PlayerState()
@@ -152,4 +174,39 @@ void AMazeCharacter::OnAttackInput(const FInputActionValue& Value)
     }
 
     ASC->TryActivateAbilityByClass(DefaultAbilities[0]);
+}
+
+void AMazeCharacter::OnRep_PlayerColorIndex()
+{
+    ApplyPlayerColor();
+}
+
+void AMazeCharacter::ApplyPlayerColor()
+{
+    if (PlayerColorIndex < 0 || PlayerColorIndex >= PlayerColors.Num())
+    {
+        return;
+    }
+
+    USkeletalMeshComponent* MeshComp = GetMesh();
+    if (!MeshComp)
+    {
+        return;
+    }
+
+    const FLinearColor& Color = PlayerColors[PlayerColorIndex];
+    for (int32 i = 0; i < MeshComp->GetNumMaterials(); ++i)
+    {
+        UMaterialInstanceDynamic* DynMat = MeshComp->CreateDynamicMaterialInstance(i);
+        if (DynMat)
+        {
+            DynMat->SetVectorParameterValue(ColorParameterName, Color);
+        }
+    }
+}
+
+void AMazeCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AMazeCharacter, PlayerColorIndex);
 }

@@ -57,10 +57,32 @@ protected:
     void GiveDefaultAbilities();
     void RegisterStunCallback();
 
+    // --- Player Color ---
+    UPROPERTY(EditDefaultsOnly, Category="PlayerColor")
+    FName ColorParameterName = TEXT("PaintTint");
+
+    UPROPERTY(EditDefaultsOnly, Category="PlayerColor")
+    TArray<FLinearColor> PlayerColors = {
+        FLinearColor(1.0f,   0.686f, 0.690f, 1.f),  // #ffafb0
+        FLinearColor(0.933f, 0.718f, 0.392f, 1.f),  // #eeb764
+        FLinearColor(0.992f, 0.980f, 0.529f, 1.f),  // #fdfa87
+        FLinearColor(0.686f, 1.0f,   0.729f, 1.f),  // #afffba
+    };
+
+    UPROPERTY(ReplicatedUsing=OnRep_PlayerColorIndex)
+    int32 PlayerColorIndex = INDEX_NONE;
+
+    UFUNCTION()
+    void OnRep_PlayerColorIndex();
+
+    void ApplyPlayerColor();
+
     UFUNCTION()
     void OnStunTagChanged(const FGameplayTag Tag, int32 NewCount);
 
     void OnAttackInput(const FInputActionValue& Value);
 
     bool bAbilitiesGranted = false;
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
