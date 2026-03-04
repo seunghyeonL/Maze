@@ -89,5 +89,5 @@ private:
 
 	FTimerHandle PendingErrorTimerHandle;
 	
-	int MaxPlayerNum = 4;
+	int32 MaxPlayerNum = 4;
 };
