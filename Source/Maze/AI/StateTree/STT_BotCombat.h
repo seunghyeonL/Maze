@@ -36,7 +36,7 @@ struct MAZE_API FSTT_BotCombatInstanceData
 	float AttackRange = 200.f;
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
-	float PreAttackDelay = 0.5f;
+	float PreAttackDelay = 0.1f;
 
 	UPROPERTY(EditAnywhere, Category=Parameter)
 	float AttackCooldownDuration = 1.0f;

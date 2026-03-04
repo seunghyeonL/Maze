@@ -28,7 +28,7 @@ EStateTreeRunStatus FSTT_BotCombat::EnterState(FStateTreeExecutionContext& Conte
 		InstanceData.AIController->SetFocus(TargetPlayer);
 		FAIMoveRequest MoveRequest;
 		MoveRequest.SetGoalActor(TargetPlayer);
-		MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
+		MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.7f);
 		InstanceData.AIController->MoveTo(MoveRequest);
 	}
 
@@ -85,7 +85,7 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 				{
 					FAIMoveRequest MoveRequest;
 					MoveRequest.SetGoalActor(TargetPlayer);
-					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
+					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.7f);
 					InstanceData.AIController->MoveTo(MoveRequest);
 				}
 			}
@@ -104,6 +104,13 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 
 	case EBotCombatPhase::Attacking:
 		{
+			// Looking Target
+			FVector PlayerDir = (TargetPlayer->GetActorLocation() - InstanceData.Actor->GetActorLocation()).GetSafeNormal();
+			if (PlayerDir != FVector::ZeroVector)
+			{
+				InstanceData.Actor->SetActorRotation(FRotationMatrix::MakeFromX(PlayerDir).Rotator());
+			}
+			
 			// Activate attack ability (GA_MazeAttack set via AttackAbilityClass parameter)
 			if (InstanceData.AttackAbilityClass)
 			{
@@ -139,7 +146,7 @@ EStateTreeRunStatus FSTT_BotCombat::Tick(FStateTreeExecutionContext& Context, co
 				{
 					FAIMoveRequest MoveRequest;
 					MoveRequest.SetGoalActor(TargetPlayer);
-					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.5f);
+					MoveRequest.SetAcceptanceRadius(InstanceData.AttackRange * 0.7f);
 					InstanceData.AIController->MoveTo(MoveRequest);
 				}
 			}
