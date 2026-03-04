@@ -12,6 +12,7 @@ class USOSManager;
 class UUIFlowSubsystem;
 class ULobbyPlayerEntryItem;
 class AMazeLobbyPlayerState;
+class ULoadingOverlayWidget;
 
 UCLASS()
 class MAZE_API ULobbyWidget : public UUserWidget
@@ -37,6 +38,10 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	UListView* PlayerList;
+
+	/** 로딩 오버레이 (선택적 - BP에서 바인딩) */
+	UPROPERTY(meta = (BindWidgetOptional))
+	ULoadingOverlayWidget* LoadingOverlay;
 
 	UPROPERTY()
 	USOSManager* SOSManager = nullptr;
@@ -76,6 +81,8 @@ private:
 	void BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState);
 	void BindPlayerStateMazeSize(AMazeLobbyPlayerState* PlayerState);
 	void UnbindPlayerStates();
+	void ShowLoading(const FText& Message);
+	void HideLoading();
 
 	FTimerHandle RefreshTimerHandle;
 };

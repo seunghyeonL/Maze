@@ -4,6 +4,7 @@
 #include "PlayerState/MazeLobbyPlayerState.h"
 #include "OnlineSubsystem/SOSManager.h"
 #include "UIFlowSubsystem.h"
+#include "LoadingOverlayWidget.h"
 
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
@@ -70,6 +71,12 @@ void ULobbyWidget::NativeConstruct()
 	if (!PlayerList)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: PlayerList missing"));
+	}
+
+	if (!IsLobbyHost())
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: LobbyWidget showing loading overlay for client sync"));
+		ShowLoading(FText::FromString(TEXT("로비 정보 동기화 중...")));
 	}
 
 	RefreshPlayerList();
@@ -343,6 +350,12 @@ void ULobbyWidget::RefreshPlayerList()
 			}
 		}
 	}
+
+	if (LoadingOverlay && LoadingOverlay->IsShowing() && PlayerItems.Num() > 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: LobbyWidget hiding loading overlay (sync complete, %d players)"), PlayerItems.Num());
+		HideLoading();
+	}
 }
 
 void ULobbyWidget::BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState)
@@ -417,4 +430,20 @@ void ULobbyWidget::HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int
 		return;
 	}
 	MazeSizeComboBox->SetSelectedOption(FString::FromInt(NewMazeSize));
+}
+
+void ULobbyWidget::ShowLoading(const FText& Message)
+{
+	if (LoadingOverlay)
+	{
+		LoadingOverlay->Show(Message);
+	}
+}
+
+void ULobbyWidget::HideLoading()
+{
+	if (LoadingOverlay)
+	{
+		LoadingOverlay->Hide();
+	}
 }
