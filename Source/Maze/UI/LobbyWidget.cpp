@@ -406,11 +406,12 @@ void ULobbyWidget::HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectI
 
 void ULobbyWidget::HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int32 NewMazeSize)
 {
+	(void)PlayerState;
 	if (!MazeSizeComboBox)
 	{
 		return;
 	}
-	// 호스트의 ComboBox는 source of truth이므로 업데이트 건너땁
+	// 호스트의 ComboBox는 source of truth이므로 업데이트 건너뜀
 	if (IsLobbyHost())
 	{
 		return;
