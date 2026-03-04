@@ -14,19 +14,37 @@ void ATitleGameMode::PreLogin(const FString& Options, const FString& Address, co
 	FString& ErrorMessage)
 {
 	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	if (!ErrorMessage.IsEmpty()) return;
 	
 	if (IOnlineSessionPtr Sessions = Online::GetSessionInterface(GetWorld()))
 	{
 		if (FNamedOnlineSession* Named = Sessions->GetNamedSession(NAME_GameSession))
 		{
-			int32 MaxPlayers = Named->SessionSettings.NumPublicConnections;
+			const int32 MaxPlayers = Named->SessionSettings.NumPublicConnections;
+			const int32 Current = GetNumPlayers();
 			
-			if (GetNumPlayers() >= MaxPlayers)
+			if (Current + PendingJoinCount >= MaxPlayers)
 			{
 				UE_LOG(LogTemp, Log, TEXT("MazeUI: CreateSession rejected on client"));
 				ErrorMessage = TEXT("Server is full");
-				// OnLoginFailed.Broadcast(FText::FromString("접속 실패"), FText::FromString("인원 초과"));
+				return;
 			}
+			
+			PendingJoinCount++;
 		}
 	}
 }
+
+void ATitleGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+	
+	PendingJoinCount = FMath::Max(PendingJoinCount - 1, 0);
+}
+
+void ATitleGameMode::NotifyPendingConnectionLost(const FUniqueNetIdRepl& ConnectionUniqueId)
+{
+	// Super::NotifyPendingConnectionLost(ConnectionUniqueId); - Empty Function
+	PendingJoinCount = FMath::Max(PendingJoinCount - 1, 0);
+}
+

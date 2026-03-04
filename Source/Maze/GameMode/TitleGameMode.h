@@ -20,8 +20,11 @@ class MAZE_API ATitleGameMode : public AGameMode
 public:
 	ATitleGameMode();
 	
-	// UPROPERTY(BlueprintAssignable) 
-	// mutable FOnLoginFailed OnLoginFailed;
-	
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	
+	virtual void NotifyPendingConnectionLost(const FUniqueNetIdRepl& ConnectionUniqueId) override;
+	
+private:
+	int32 PendingJoinCount = 0;
 };
