@@ -188,7 +188,7 @@ void UMatchWidget::HandleFindLobbyClicked()
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match FindSessions clicked"));
 	if (SOSManager)
 	{
-		ShowLoading(FText::FromString(TEXT("방 검색 중...")));
+		ShowLoading(FText::FromString(TEXT("로비 검색 중...")));
 		SOSManager->FindSessions(50, true);
 	}
 	else
@@ -219,7 +219,7 @@ void UMatchWidget::HandleLobbyItemClicked(UObject* Item)
 	if (SOSManager)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeUI: Join session index %d"), ResultItem->SessionInfo.Index);
-		ShowLoading(FText::FromString(TEXT("방 참가 중...")));
+		ShowLoading(FText::FromString(TEXT("로비 참가 중...")));
 		SOSManager->JoinSessionByIndex(ResultItem->SessionInfo.Index);
 	}
 	else
