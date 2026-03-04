@@ -60,6 +60,12 @@ void ULobbyWidget::NativeConstruct()
 		MazeSizeComboBox->SetSelectedOption(TEXT("9"));
 	}
 
+	if (MazeSizeComboBox)
+	{
+		MazeSizeComboBox->OnSelectionChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeSelectionChanged);
+		MazeSizeComboBox->OnSelectionChanged.AddDynamic(this, &ULobbyWidget::HandleMazeSizeSelectionChanged);
+	}
+
 
 	if (!PlayerList)
 	{
@@ -91,6 +97,11 @@ void ULobbyWidget::NativeDestruct()
 	if (ExitToMatchingButton)
 	{
 		ExitToMatchingButton->OnClicked.RemoveDynamic(this, &ULobbyWidget::HandleExitToMatchingClicked);
+	}
+
+	if (MazeSizeComboBox)
+	{
+		MazeSizeComboBox->OnSelectionChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeSelectionChanged);
 	}
 
 	if (UWorld* World = GetWorld())
@@ -143,7 +154,8 @@ void ULobbyWidget::UpdateRoleVisibility()
 	
 	if (MazeSizeComboBox)
 	{
-		MazeSizeComboBox->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+		MazeSizeComboBox->SetVisibility(ESlateVisibility::Visible);
+		MazeSizeComboBox->SetIsEnabled(bIsHost);
 	}
 }
 
@@ -319,6 +331,17 @@ void ULobbyWidget::RefreshPlayerList()
 		PlayerItems.Add(NewItem);
 		PlayerList->AddItem(NewItem);
 		BindPlayerStateReady(LobbyPlayerState);
+		BindPlayerStateMazeSize(LobbyPlayerState);
+
+		// 초기 동기화: 호스트가 이미 크기를 변경했다면 ComboBox 업데이트
+		if (!IsLobbyHost())
+		{
+			const int32 CurrentMazeSize = LobbyPlayerState->GetSelectedMazeSize();
+			if (MazeSizeComboBox && CurrentMazeSize != 9)
+			{
+				MazeSizeComboBox->SetSelectedOption(FString::FromInt(CurrentMazeSize));
+			}
+		}
 	}
 }
 
@@ -334,6 +357,18 @@ void ULobbyWidget::BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState)
 	BoundPlayerStates.AddUnique(PlayerState);
 }
 
+void ULobbyWidget::BindPlayerStateMazeSize(AMazeLobbyPlayerState* PlayerState)
+{
+	if (!PlayerState)
+	{
+		return;
+	}
+
+	PlayerState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
+	PlayerState->OnMazeSizeChanged.AddDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
+	BoundPlayerStates.AddUnique(PlayerState);
+}
+
 void ULobbyWidget::UnbindPlayerStates()
 {
 	for (const TWeakObjectPtr<AMazeLobbyPlayerState>& PlayerState : BoundPlayerStates)
@@ -341,8 +376,44 @@ void ULobbyWidget::UnbindPlayerStates()
 		if (PlayerState.IsValid())
 		{
 			PlayerState->OnReadyChanged.RemoveDynamic(this, &ULobbyWidget::HandleReadyChanged);
+			PlayerState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
 		}
 	}
 
 	BoundPlayerStates.Reset();
+}
+
+void ULobbyWidget::HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+	// 피드백 루프 방지: 프로그래밍적 변경은 무시
+	if (SelectionType == ESelectInfo::Direct)
+	{
+		return;
+	}
+	// 클라이언트 방어: 호스트만 요청 전송
+	if (!IsLobbyHost())
+	{
+		return;
+	}
+	AMazeLobbyPlayerState* LobbyPS = GetOwningPlayerState<AMazeLobbyPlayerState>();
+	if (!LobbyPS)
+	{
+		return;
+	}
+	const int32 NewSize = FCString::Atoi(*SelectedItem);
+	LobbyPS->RequestSetMazeSize(NewSize);
+}
+
+void ULobbyWidget::HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int32 NewMazeSize)
+{
+	if (!MazeSizeComboBox)
+	{
+		return;
+	}
+	// 호스트의 ComboBox는 source of truth이므로 업데이트 건너땁
+	if (IsLobbyHost())
+	{
+		return;
+	}
+	MazeSizeComboBox->SetSelectedOption(FString::FromInt(NewMazeSize));
 }

@@ -62,12 +62,19 @@ protected:
 	UFUNCTION()
 	void HandleReadyChanged(AMazeLobbyPlayerState* PlayerState, bool bIsReady);
 
+	UFUNCTION()
+	void HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
+	UFUNCTION()
+	void HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int32 NewMazeSize);
+
 private:
 	void CacheSubsystems();
 	void UpdateRoleVisibility();
 	bool IsLobbyHost() const;
 	void RefreshPlayerList();
 	void BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState);
+	void BindPlayerStateMazeSize(AMazeLobbyPlayerState* PlayerState);
 	void UnbindPlayerStates();
 
 	FTimerHandle RefreshTimerHandle;
