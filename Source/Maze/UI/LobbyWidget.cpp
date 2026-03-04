@@ -5,7 +5,9 @@
 #include "OnlineSubsystem/SOSManager.h"
 #include "UIFlowSubsystem.h"
 #include "LoadingOverlayWidget.h"
+#include "CommonModalWidget.h"
 #include "Settings/MazeSettings.h"
+#include "GameState/MazeLobbyGameState.h"
 
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
@@ -115,6 +117,7 @@ void ULobbyWidget::NativeDestruct()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+		World->GetTimerManager().ClearTimer(GameStartTimerHandle);
 	}
 
 	UnbindPlayerStates();
@@ -202,39 +205,61 @@ void ULobbyWidget::HandleGameStartClicked()
 		return;
 	}
 
-	const AGameStateBase* GameState = World->GetGameState();
+	AGameStateBase* GameState = World->GetGameState();
 	if (!GameState)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart failed (no GameState)"));
 		return;
 	}
 
-	for (APlayerState* PlayerState : GameState->PlayerArray)
-	{
-		const AMazeLobbyPlayerState* LobbyPlayerState = Cast<AMazeLobbyPlayerState>(PlayerState);
-		if (!LobbyPlayerState)
-		{
-			continue;
-		}
+	AMazeLobbyGameState* LobbyGameState = Cast<AMazeLobbyGameState>(GameState);
 
-		if (!LobbyPlayerState->IsReady())
+	// Ready 체크
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		const AMazeLobbyPlayerState* LobbyPS = Cast<AMazeLobbyPlayerState>(PS);
+		if (!LobbyPS) continue;
+		if (!LobbyPS->IsReady())
 		{
 			UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart blocked (not all players ready)"));
+			ShowAlert(FText::FromString(TEXT("알림")), FText::FromString(TEXT("모두 준비되지 않았습니다.")));
 			return;
 		}
 	}
 
-	// 현재 로비 인원수를 세션 설정에 저장 (MazeGameMode가 읽어서 사용)
-	if (SOSManager)
-	{
-		SOSManager->SetExpectedPlayers(GameState->PlayerArray.Num());
-	}
+	// === 모두 Ready — 게임 시작 시퀀스 ===
 
-	const FString SelectedSize = MazeSizeComboBox ? MazeSizeComboBox->GetSelectedOption() : TEXT("9");
+	// 1. 더블클릭 방지
+	if (GameStartButton) GameStartButton->SetIsEnabled(false);
+
+	// 2. RefreshTimer 중지 (ShowLoading auto-hide 방지)
+	World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+
+	// 3. 호스트 즉시 LoadingOverlay 표시
+	ShowLoading(FText::FromString(TEXT("게임 시작 중...")));
+
+	// 4. bGameStarted 설정 (클라이언트에 OnRep 전달)
+	if (LobbyGameState) LobbyGameState->SetGameStarted(true);
+
+	// 5. 세션 설정
+	if (SOSManager) SOSManager->SetExpectedPlayers(GameState->PlayerArray.Num());
+
+	// 6. MazeSize를 GameState에서 읽기
+	const FString SelectedSize = LobbyGameState
+		? FString::FromInt(LobbyGameState->GetSelectedMazeSize())
+		: (MazeSizeComboBox ? MazeSizeComboBox->GetSelectedOption() : TEXT("9"));
+
+	// 7. 0.3초 지연 후 ServerTravel (OnRep이 클라이언트에 도달할 시간 확보)
 	const FString TravelURL = FString::Printf(TEXT("%s?listen?MazeSize=%s"), *GetDefault<UMazeSettings>()->GetMazeLevelPath(), *SelectedSize);
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d, MazeSize=%s)"),
 		GameState->PlayerArray.Num(), *SelectedSize);
-	World->ServerTravel(*TravelURL);
+
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindLambda([World, TravelURL]()
+	{
+		if (World) World->ServerTravel(TravelURL);
+	});
+	World->GetTimerManager().SetTimer(GameStartTimerHandle, TimerDelegate, 0.3f, false);
 }
 
 void ULobbyWidget::HandleExitToMatchingClicked()
@@ -325,6 +350,17 @@ void ULobbyWidget::RefreshPlayerList()
 	PlayerList->ClearListItems();
 	PlayerItems.Reset();
 	UnbindPlayerStates();
+	BindGameStateMazeSize();
+
+	AMazeLobbyGameState* LobbyGameState = GetWorld() ? GetWorld()->GetGameState<AMazeLobbyGameState>() : nullptr;
+	if (!IsLobbyHost() && LobbyGameState)
+	{
+		const int32 CurrentMazeSize = LobbyGameState->GetSelectedMazeSize();
+		if (MazeSizeComboBox && CurrentMazeSize != 9)
+		{
+			MazeSizeComboBox->SetSelectedOption(FString::FromInt(CurrentMazeSize));
+		}
+	}
 
 	for (APlayerState* PlayerState : GameState->PlayerArray)
 	{
@@ -339,17 +375,6 @@ void ULobbyWidget::RefreshPlayerList()
 		PlayerItems.Add(NewItem);
 		PlayerList->AddItem(NewItem);
 		BindPlayerStateReady(LobbyPlayerState);
-		BindPlayerStateMazeSize(LobbyPlayerState);
-
-		// 초기 동기화: 호스트가 이미 크기를 변경했다면 ComboBox 업데이트
-		if (!IsLobbyHost())
-		{
-			const int32 CurrentMazeSize = LobbyPlayerState->GetSelectedMazeSize();
-			if (MazeSizeComboBox && CurrentMazeSize != 9)
-			{
-				MazeSizeComboBox->SetSelectedOption(FString::FromInt(CurrentMazeSize));
-			}
-		}
 	}
 
 	if (LoadingOverlay && LoadingOverlay->IsShowing() && PlayerItems.Num() > 0)
@@ -371,16 +396,25 @@ void ULobbyWidget::BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState)
 	BoundPlayerStates.AddUnique(PlayerState);
 }
 
-void ULobbyWidget::BindPlayerStateMazeSize(AMazeLobbyPlayerState* PlayerState)
+void ULobbyWidget::BindGameStateMazeSize()
 {
-	if (!PlayerState)
-	{
-		return;
-	}
+	AMazeLobbyGameState* LobbyGameState = GetWorld() ? GetWorld()->GetGameState<AMazeLobbyGameState>() : nullptr;
+	if (!LobbyGameState || BoundGameState.Get() == LobbyGameState) return;
 
-	PlayerState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
-	PlayerState->OnMazeSizeChanged.AddDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
-	BoundPlayerStates.AddUnique(PlayerState);
+	UnbindGameState();
+	LobbyGameState->OnMazeSizeChanged.AddDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
+	LobbyGameState->OnGameStarted.AddDynamic(this, &ULobbyWidget::HandleGameStarted);
+	BoundGameState = LobbyGameState;
+}
+
+void ULobbyWidget::UnbindGameState()
+{
+	if (BoundGameState.IsValid())
+	{
+		BoundGameState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
+		BoundGameState->OnGameStarted.RemoveDynamic(this, &ULobbyWidget::HandleGameStarted);
+	}
+	BoundGameState.Reset();
 }
 
 void ULobbyWidget::UnbindPlayerStates()
@@ -390,11 +424,11 @@ void ULobbyWidget::UnbindPlayerStates()
 		if (PlayerState.IsValid())
 		{
 			PlayerState->OnReadyChanged.RemoveDynamic(this, &ULobbyWidget::HandleReadyChanged);
-			PlayerState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
 		}
 	}
 
 	BoundPlayerStates.Reset();
+	UnbindGameState();
 }
 
 void ULobbyWidget::HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
@@ -409,27 +443,15 @@ void ULobbyWidget::HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectI
 	{
 		return;
 	}
-	AMazeLobbyPlayerState* LobbyPS = GetOwningPlayerState<AMazeLobbyPlayerState>();
-	if (!LobbyPS)
-	{
-		return;
-	}
 	const int32 NewSize = FCString::Atoi(*SelectedItem);
-	LobbyPS->RequestSetMazeSize(NewSize);
+	AMazeLobbyGameState* LobbyGameState = GetWorld() ? GetWorld()->GetGameState<AMazeLobbyGameState>() : nullptr;
+	if (LobbyGameState) { LobbyGameState->SetSelectedMazeSize(NewSize); }
 }
 
-void ULobbyWidget::HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int32 NewMazeSize)
+void ULobbyWidget::HandleMazeSizeChanged(int32 NewMazeSize)
 {
-	(void)PlayerState;
-	if (!MazeSizeComboBox)
-	{
-		return;
-	}
-	// 호스트의 ComboBox는 source of truth이므로 업데이트 건너뜀
-	if (IsLobbyHost())
-	{
-		return;
-	}
+	if (!MazeSizeComboBox) return;
+	if (IsLobbyHost()) return;  // 호스트 ComboBox는 source of truth
 	MazeSizeComboBox->SetSelectedOption(FString::FromInt(NewMazeSize));
 }
 
@@ -447,4 +469,18 @@ void ULobbyWidget::HideLoading()
 	{
 		LoadingOverlay->Hide();
 	}
+}
+
+void ULobbyWidget::ShowAlert(const FText& Title, const FText& Message)
+{
+	if (AlertModal)
+	{
+		AlertModal->ShowAlert(Title, Message);
+	}
+}
+
+void ULobbyWidget::HandleGameStarted()
+{
+	if (IsLobbyHost()) return;  // 호스트는 HandleGameStartClicked에서 직접 처리
+	ShowLoading(FText::FromString(TEXT("게임 시작 중...")));
 }

@@ -13,6 +13,8 @@ class UUIFlowSubsystem;
 class ULobbyPlayerEntryItem;
 class AMazeLobbyPlayerState;
 class ULoadingOverlayWidget;
+class UCommonModalWidget;
+class AMazeLobbyGameState;
 
 UCLASS()
 class MAZE_API ULobbyWidget : public UUserWidget
@@ -43,6 +45,10 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	ULoadingOverlayWidget* LoadingOverlay;
 
+	/** 알림 모달 (선택적 - BP에서 바인딩) */
+	UPROPERTY(meta = (BindWidgetOptional))
+	UCommonModalWidget* AlertModal;
+
 	UPROPERTY()
 	USOSManager* SOSManager = nullptr;
 
@@ -71,7 +77,7 @@ protected:
 	void HandleMazeSizeSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 
 	UFUNCTION()
-	void HandleMazeSizeChanged(AMazeLobbyPlayerState* PlayerState, int32 NewMazeSize);
+	void HandleMazeSizeChanged(int32 NewMazeSize);
 
 private:
 	void CacheSubsystems();
@@ -79,10 +85,23 @@ private:
 	bool IsLobbyHost() const;
 	void RefreshPlayerList();
 	void BindPlayerStateReady(AMazeLobbyPlayerState* PlayerState);
-	void BindPlayerStateMazeSize(AMazeLobbyPlayerState* PlayerState);
 	void UnbindPlayerStates();
 	void ShowLoading(const FText& Message);
 	void HideLoading();
 
+	/** 알림 모달 헬퍼 */
+	UFUNCTION()
+	void ShowAlert(const FText& Title, const FText& Message);
+
 	FTimerHandle RefreshTimerHandle;
+	FTimerHandle GameStartTimerHandle;
+
+	UPROPERTY()
+	TWeakObjectPtr<AMazeLobbyGameState> BoundGameState;
+
+	UFUNCTION()
+	void HandleGameStarted();
+
+	void BindGameStateMazeSize();
+	void UnbindGameState();
 };
