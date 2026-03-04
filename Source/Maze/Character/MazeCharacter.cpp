@@ -145,8 +145,7 @@ void AMazeCharacter::RegisterStunCallback()
         return;
     }
 
-    ASC
-        ->RegisterGameplayTagEvent(FMazeGameplayTags::Get().State_Debuff_Stun, EGameplayTagEventType::NewOrRemoved)
+    ASC->RegisterGameplayTagEvent(FMazeGameplayTags::Get().State_Debuff_Stun, EGameplayTagEventType::NewOrRemoved)
         .AddUObject(this, &AMazeCharacter::OnStunTagChanged);
 }
 

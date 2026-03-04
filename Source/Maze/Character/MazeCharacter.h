@@ -59,7 +59,7 @@ protected:
 
     // --- Player Color ---
     UPROPERTY(EditDefaultsOnly, Category="PlayerColor")
-    FName ColorParameterName = TEXT("PaintTint");
+    FName ColorParameterName = TEXT("Paint Tint");
 
     UPROPERTY(EditDefaultsOnly, Category="PlayerColor")
     TArray<FLinearColor> PlayerColors = {
