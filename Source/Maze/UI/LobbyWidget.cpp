@@ -140,6 +140,7 @@ void ULobbyWidget::UpdateRoleVisibility()
 	{
 		ReadyButton->SetVisibility(ESlateVisibility::Visible);
 	}
+	
 	if (MazeSizeComboBox)
 	{
 		MazeSizeComboBox->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
