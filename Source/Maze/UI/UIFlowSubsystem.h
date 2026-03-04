@@ -37,6 +37,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="UIFlow")
 	void SetScreenLobby(bool bHost);
 
+	/** ClientTravel 직전 호출 — 화면 상태만 설정하고 OnScreenChanged 브로드캐스트를 하지 않음.
+	 *  새 World의 TitlePlayerController::BeginPlay → RefreshUI()가 상태를 읽어 위젯을 생성함. */
+	void SetScreenLobbyForTravel(bool bHost);
+
 	UFUNCTION(BlueprintPure, Category="UIFlow")
 	bool IsLobbyHost() const { return bLobbyHost; }
 

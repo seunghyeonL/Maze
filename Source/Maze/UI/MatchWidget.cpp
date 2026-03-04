@@ -280,16 +280,19 @@ void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSession
 
 void UMatchWidget::HandleSessionJoined(bool bSuccess)
 {
-	HideLoading();
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session joined %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
 
 	if (bSuccess && UIFlowSubsystem)
 	{
-		UIFlowSubsystem->SetScreenLobby(false);
-		RemoveFromParent();
+		// 상태만 설정 — 브로드캐스트 없이 (구 World에서 premature LobbyWidget 생성 방지)
+		// 새 World의 TitlePlayerController::BeginPlay → RefreshUI()가 Screen=Lobby를 읽어 LobbyWidget 생성
+		UIFlowSubsystem->SetScreenLobbyForTravel(false);
+		// HideLoading() 호출 않음 — "방 참가 중..." 로드 유지
+		// RemoveFromParent() 호출 않음 — ClientTravel 시 World 파괴와 함께 자동 정리
 	}
 	else if (!bSuccess)
 	{
+		HideLoading();
 		ShowAlert(
 			FText::FromString(TEXT("오류")),
 			FText::FromString(TEXT("방 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))

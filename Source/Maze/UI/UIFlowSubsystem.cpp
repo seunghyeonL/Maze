@@ -29,6 +29,13 @@ void UUIFlowSubsystem::SetScreenLobby(bool bHost)
 	OnScreenChanged.Broadcast(Screen);
 }
 
+void UUIFlowSubsystem::SetScreenLobbyForTravel(bool bHost)
+{
+	Screen = EUIFlowScreen::Lobby;
+	bLobbyHost = bHost;
+	// Broadcast 않음 — 새 World의 BeginPlay → RefreshUI()가 읽어감
+}
+
 void UUIFlowSubsystem::SetPendingError(const FText& ErrorMessage)
 {
 	PendingErrorMessage = ErrorMessage;

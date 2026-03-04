@@ -198,6 +198,7 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 		}
 
 		Flow->SetPendingError(ErrorMessage);
+		ClearActiveWidget();  // MatchWidget 로드 오버레이 stuck 방지: 강제 재생성 보장
 		Flow->SetScreenMatch();
 	}
 
