@@ -6,6 +6,7 @@
 #include "UIFlowSubsystem.h"
 
 #include "Components/Button.h"
+#include "Components/ComboBoxString.h"
 #include "Components/ListView.h"
 #include "Engine/World.h"
 #include "GameFramework/GameModeBase.h"
@@ -49,6 +50,16 @@ void ULobbyWidget::NativeConstruct()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: ExitToMatchingButton missing"));
 	}
+	if (MazeSizeComboBox)
+	{
+		MazeSizeComboBox->ClearOptions();
+		MazeSizeComboBox->AddOption(TEXT("5"));
+		MazeSizeComboBox->AddOption(TEXT("7"));
+		MazeSizeComboBox->AddOption(TEXT("9"));
+		MazeSizeComboBox->AddOption(TEXT("11"));
+		MazeSizeComboBox->SetSelectedOption(TEXT("9"));
+	}
+
 
 	if (!PlayerList)
 	{
@@ -129,6 +140,10 @@ void ULobbyWidget::UpdateRoleVisibility()
 	{
 		ReadyButton->SetVisibility(ESlateVisibility::Visible);
 	}
+	if (MazeSizeComboBox)
+	{
+		MazeSizeComboBox->SetVisibility(bIsHost ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
 }
 
 void ULobbyWidget::HandleReadyClicked()
@@ -194,9 +209,11 @@ void ULobbyWidget::HandleGameStartClicked()
 		SOSManager->SetExpectedPlayers(GameState->PlayerArray.Num());
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d)"),
-		GameState->PlayerArray.Num());
-	World->ServerTravel(TEXT("/Game/Levels/MazeLevel?listen"));
+	const FString SelectedSize = MazeSizeComboBox ? MazeSizeComboBox->GetSelectedOption() : TEXT("9");
+	const FString TravelURL = FString::Printf(TEXT("/Game/Levels/MazeLevel?listen?MazeSize=%s"), *SelectedSize);
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d, MazeSize=%s)"),
+		GameState->PlayerArray.Num(), *SelectedSize);
+	World->ServerTravel(*TravelURL);
 }
 
 void ULobbyWidget::HandleExitToMatchingClicked()

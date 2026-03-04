@@ -6,6 +6,7 @@
 #include "LobbyWidget.generated.h"
 
 class UButton;
+class UComboBoxString;
 class UListView;
 class USOSManager;
 class UUIFlowSubsystem;
@@ -30,6 +31,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* ExitToMatchingButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UComboBoxString* MazeSizeComboBox;
 
 	UPROPERTY(meta = (BindWidget))
 	UListView* PlayerList;

@@ -13,12 +13,27 @@
 #include "Online/OnlineSessionNames.h"
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 AMazeGameMode::AMazeGameMode()
 {
 	PlayerControllerClass = AMazePlayerController::StaticClass();
 	bDelayedStart = false;
 	GameStateClass = AMazeGameState::StaticClass();
+}
+
+void AMazeGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	const int32 Size = UGameplayStatics::GetIntOption(Options, TEXT("MazeSize"), 9);
+	if (Size == 5 || Size == 7 || Size == 9 || Size == 11)
+	{
+		MazeWidth = Size;
+		MazeHeight = Size;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: InitGame MazeSize=%d (Width=%d, Height=%d)"), Size, MazeWidth, MazeHeight);
 }
 
 void AMazeGameMode::PostLogin(APlayerController* NewPlayer)
