@@ -6,6 +6,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "AudioSubsystem.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogMazeAudio, Log, All);
+
 class UAudioSettingsWidget;
 class APlayerController;
 
@@ -31,6 +33,7 @@ public:
 	/** Toggle the AudioSettings popup. Opens if closed; closes if open. */
 	void ToggleAudioSettings(APlayerController* PC);
 
+	
 private:
 	/** Create and show the AudioSettings widget, capturing mouse. */
 	void OpenAudioSettings(APlayerController* PC);
@@ -42,6 +45,9 @@ private:
 	UFUNCTION()
 	void OnMapLoaded(UWorld* LoadedWorld);
 
+	/** Actual audio init work, called from a next-tick timer. */
+	void InitializeAudioDeferred();
+
 	// ---- Members ----
 
 	TWeakObjectPtr<APlayerController> ActivePC;
@@ -51,4 +57,5 @@ private:
 
 	bool bSavedShowMouseCursor = false;
 	bool bAudioInitialized = false;
+	FTimerHandle AudioInitTimerHandle;
 };

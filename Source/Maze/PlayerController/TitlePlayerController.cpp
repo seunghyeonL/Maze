@@ -52,6 +52,10 @@ void ATitlePlayerController::BeginPlay()
 
 	if (UAudioSubsystem* AudioSub = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAudioSubsystem>() : nullptr)
 	{
+		UE_LOG(LogMazeAudio, Log, TEXT("=== TitlePC::BeginPlay === World=%s, NetMode=%d, AudioSub=%s"),
+			GetWorld() ? *GetWorld()->GetMapName() : TEXT("NULL"),
+			GetWorld() ? static_cast<int32>(GetWorld()->GetNetMode()) : -1,
+			AudioSub ? TEXT("VALID") : TEXT("NULL"));
 		AudioSub->InitializeAudio();
 	}
 }
