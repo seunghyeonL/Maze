@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "Interfaces/AttackHitNotifyReceiver.h"
+#include "GameplayTagContainer.h"
 #include "MazeCharacter.generated.h"
 
 class UAbilitySystemComponent;
@@ -55,7 +56,6 @@ protected:
     int32 LastProcessedAttackNotifyId_Server = INDEX_NONE;
     
     void GiveDefaultAbilities();
-    void RegisterStunCallback();
 
     // --- Player Color ---
     UPROPERTY(EditDefaultsOnly, Category="PlayerColor")
@@ -76,9 +76,9 @@ protected:
     void OnRep_PlayerColorIndex();
 
     void ApplyPlayerColor();
-
-    UFUNCTION()
-    void OnStunTagChanged(const FGameplayTag Tag, int32 NewCount);
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement")
+    FGameplayTagContainer BlockMovementTags;
 
     void OnAttackInput(const FInputActionValue& Value);
     

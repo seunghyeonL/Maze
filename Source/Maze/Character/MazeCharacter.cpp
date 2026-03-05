@@ -73,7 +73,6 @@ void AMazeCharacter::PossessedBy(AController* NewController)
 
     ASC->InitAbilityActorInfo(this, this);
     GiveDefaultAbilities();
-    RegisterStunCallback();
 
     // 봇 제외: APlayerController에게만 색 배정
     if (Cast<APlayerController>(NewController))
@@ -104,7 +103,6 @@ void AMazeCharacter::OnRep_PlayerState()
     }
 
     ASC->InitAbilityActorInfo(this, this);
-    RegisterStunCallback();
 }
 
 void AMazeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -136,33 +134,6 @@ void AMazeCharacter::GiveDefaultAbilities()
     }
 
     bAbilitiesGranted = true;
-}
-
-void AMazeCharacter::RegisterStunCallback()
-{
-    if (!ASC)
-    {
-        return;
-    }
-
-    ASC->RegisterGameplayTagEvent(FMazeGameplayTags::Get().State_Debuff_Stun, EGameplayTagEventType::NewOrRemoved)
-        .AddUObject(this, &AMazeCharacter::OnStunTagChanged);
-}
-
-void AMazeCharacter::OnStunTagChanged(const FGameplayTag Tag, int32 NewCount)
-{
-    if (!GetCharacterMovement())
-    {
-        return;
-    }
-
-    if (NewCount > 0)
-    {
-        GetCharacterMovement()->DisableMovement();
-        return;
-    }
-
-    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 }
 
 void AMazeCharacter::OnAttackInput(const FInputActionValue& Value)
