@@ -127,6 +127,7 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 		return;
 	}
 	
+	bool bHitSuccess = false;
 	for (const FHitResult& Hit : HitResults)
 	{
 		AActor* HitActor = Hit.GetActor();
@@ -141,10 +142,8 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 			continue;
 		}
 		
-		if (Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
-		{
-			IAttackHitNotifyReceiver::Execute_PlayHitSound(Avatar);
-		}
+		bHitSuccess = true;
+		
 		/* GE 면역설정으로 대체 */
 		// if (TargetASC->HasMatchingGameplayTag(FMazeGameplayTags::Get().State_Invincible))
 		// {
@@ -174,6 +173,11 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 				SourceASC->ApplyGameplayEffectSpecToTarget(*InvincSpec.Data.Get(), TargetASC);
 			}
 		}
+	}
+	
+	if (bHitSuccess && Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
+	{
+		IAttackHitNotifyReceiver::Execute_PlayHitSound(Avatar);
 	}
 }
 

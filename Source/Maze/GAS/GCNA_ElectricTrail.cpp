@@ -43,9 +43,9 @@ bool AGCNA_ElectricTrail::OnRemove_Implementation(AActor* MyTarget, const FGamep
 	if (SpawnedComp && IsValid(SpawnedComp))
 	{
 		// 트레일은 보통 "Deactivate"로 부드럽게 끄고, AutoDestroy를 켜거나 DestroyComponent로 정리
-		SpawnedComp->Deactivate();
 		SpawnedComp->SetAutoDestroy(true);
-		// SpawnedComp->DestroyComponent();
+		SpawnedComp->Deactivate();
+		SpawnedComp->DestroyComponent();
 		SpawnedComp = nullptr;
 	}
 	return true;
