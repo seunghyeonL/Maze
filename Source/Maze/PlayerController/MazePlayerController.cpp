@@ -22,6 +22,12 @@ void AMazePlayerController::BeginPlay()
 	InitializeAudio();
 }
 
+void AMazePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	CleanupAudio();
+	Super::EndPlay(EndPlayReason);
+}
+
 void AMazePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -134,4 +140,39 @@ void AMazePlayerController::ApplyAudioSettings()
 	{
 		AudioDevice->SetSoundMixClassOverride(MasterSoundMix, SFXSoundClass, Settings->GetSFXVolume() * Master, Pitch, Fade, false);
 	}
+}
+
+void AMazePlayerController::CleanupAudio()
+{
+	if (!MasterSoundMix)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FAudioDeviceHandle AudioDevice = World->GetAudioDevice();
+	if (!AudioDevice.IsValid())
+	{
+		return;
+	}
+
+	if (MasterSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, MasterSoundClass, 0.f);
+	}
+	if (BGMSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, BGMSoundClass, 0.f);
+	}
+	if (SFXSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, SFXSoundClass, 0.f);
+	}
+
+	AudioDevice->PopSoundMixModifier(MasterSoundMix);
 }

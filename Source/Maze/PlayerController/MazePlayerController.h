@@ -16,8 +16,9 @@ class MAZE_API AMazePlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;
+virtual void BeginPlay() override;
+virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+virtual void SetupInputComponent() override;
 
 	/** 볼륨 변경 시 오디오 디바이스에 적용 */
 	void ApplyAudioSettings();
@@ -47,7 +48,10 @@ private:
 	void ToggleAudioSettings();
 
 	/** 레벨 진입 시 저장된 볼륨 초기화 적용 */
-	void InitializeAudio();
+void InitializeAudio();
+
+	/** 레벨 종료 시 오디오 정리 */
+	void CleanupAudio();
 
 	UPROPERTY()
 	TObjectPtr<UAudioSettingsWidget> AudioSettingsWidgetInstance;

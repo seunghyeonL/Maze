@@ -59,6 +59,8 @@ void ATitlePlayerController::BeginPlay()
 
 void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	CleanupAudio();
+
 	if (GEngine)
 	{
 		GEngine->OnNetworkFailure().RemoveAll(this);
@@ -236,6 +238,41 @@ void ATitlePlayerController::InitializeAudio()
 	}
 
 	ApplyAudioSettings();
+}
+
+void ATitlePlayerController::CleanupAudio()
+{
+	if (!MasterSoundMix)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FAudioDeviceHandle AudioDevice = World->GetAudioDevice();
+	if (!AudioDevice.IsValid())
+	{
+		return;
+	}
+
+	if (MasterSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, MasterSoundClass, 0.f);
+	}
+	if (BGMSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, BGMSoundClass, 0.f);
+	}
+	if (SFXSoundClass)
+	{
+		AudioDevice->ClearSoundMixClassOverride(MasterSoundMix, SFXSoundClass, 0.f);
+	}
+
+	AudioDevice->PopSoundMixModifier(MasterSoundMix);
 }
 
 void ATitlePlayerController::ApplyAudioSettings()

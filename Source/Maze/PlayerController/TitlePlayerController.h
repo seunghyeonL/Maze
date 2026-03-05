@@ -64,6 +64,7 @@ private:
 	UFUNCTION() void HandleScreenChanged(EUIFlowScreen NewScreen);
 
 	void InitializeAudio();
+	void CleanupAudio();
 
 	UPROPERTY()
 	TObjectPtr<UAudioSettingsWidget> AudioSettingsWidgetInstance;
