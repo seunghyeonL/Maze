@@ -54,12 +54,14 @@ void ATitlePlayerController::BeginPlay()
 
 	RefreshUI();
 
-	InitializeAudio();
+	// [ServerTravel crash fix] TitleLevel에서 SoundMix 미사용 — MazePC가 처리
+	// InitializeAudio();
 }
 
 void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	CleanupAudio();
+	// [ServerTravel crash fix] 초기화하지 않았으므로 정리도 불필요
+	// CleanupAudio();
 
 	if (GEngine)
 	{
@@ -337,7 +339,8 @@ void ATitlePlayerController::ToggleAudioSettings()
 		}
 
 		AudioSettingsWidgetInstance->OnCloseRequested.BindUObject(this, &ATitlePlayerController::ToggleAudioSettings);
-		AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &ATitlePlayerController::ApplyAudioSettings);
+		// [ServerTravel crash fix] TitleLevel에서 SoundMix 조정 안 함 — 값은 MazeUserSettings에 자동 저장됨
+		// AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &ATitlePlayerController::ApplyAudioSettings);
 		AudioSettingsWidgetInstance->AddToViewport(100);
 
 		// Title은 이미 UI 모드이므로 위젯에 포커스만 설정
