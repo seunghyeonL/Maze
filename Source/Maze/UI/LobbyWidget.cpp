@@ -6,7 +6,7 @@
 #include "UIFlowSubsystem.h"
 #include "LoadingOverlayWidget.h"
 #include "CommonModalWidget.h"
-#include "Settings/MazeSettings.h"
+#include "Settings/MazeLevelSettings.h"
 #include "GameState/MazeLobbyGameState.h"
 
 #include "Components/Button.h"
@@ -250,7 +250,7 @@ void ULobbyWidget::HandleGameStartClicked()
 		: (MazeSizeComboBox ? MazeSizeComboBox->GetSelectedOption() : TEXT("9"));
 
 	// 7. 0.3초 지연 후 ServerTravel (OnRep이 클라이언트에 도달할 시간 확보)
-	const FString TravelURL = FString::Printf(TEXT("%s?listen?MazeSize=%s"), *GetDefault<UMazeSettings>()->GetMazeLevelPath(), *SelectedSize);
+	const FString TravelURL = FString::Printf(TEXT("%s?listen?MazeSize=%s"), *GetDefault<UMazeLevelSettings>()->GetMazeLevelPath(), *SelectedSize);
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: GameStart travel to MazeLevel (ExpectedPlayers=%d, MazeSize=%s)"),
 		GameState->PlayerArray.Num(), *SelectedSize);
 
@@ -266,7 +266,7 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
 
-	const FString TitleLevelUrl = GetDefault<UMazeSettings>()->GetTitleLevelPath();
+	const FString TitleLevelUrl = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();
 
 	UWorld* World = GetWorld();
 	const bool bHost = IsLobbyHost();

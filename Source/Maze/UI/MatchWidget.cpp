@@ -5,7 +5,7 @@
 #include "LoadingOverlayWidget.h"
 #include "CommonModalWidget.h"
 #include "OnlineSubsystem/SOSManager.h"
-#include "Settings/MazeSettings.h"
+#include "Settings/MazeLevelSettings.h"
 
 #include "Components/Button.h"
 #include "Components/ListView.h"
@@ -175,7 +175,7 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
-		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeSettings>()->GetTitleLevelPath(), false);
+		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeLevelSettings>()->GetTitleLevelPath(), false);
 	}
 	else
 	{

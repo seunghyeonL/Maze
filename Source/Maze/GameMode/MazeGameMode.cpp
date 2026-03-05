@@ -14,7 +14,7 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Kismet/GameplayStatics.h"
-#include "Settings/MazeSettings.h"
+#include "Settings/MazeLevelSettings.h"
 
 AMazeGameMode::AMazeGameMode()
 {
@@ -188,7 +188,7 @@ void AMazeGameMode::OnGoalReached(APlayerController* Winner)
 void AMazeGameMode::ReturnToLobby()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Returning to TitleLevel (seamless)..."));
-	GetWorld()->ServerTravel(FString::Printf(TEXT("%s?listen"), *GetDefault<UMazeSettings>()->GetTitleLevelPath()));
+	GetWorld()->ServerTravel(FString::Printf(TEXT("%s?listen"), *GetDefault<UMazeLevelSettings>()->GetTitleLevelPath()));
 }
 
 void AMazeGameMode::OnArrivalTimeout()

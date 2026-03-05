@@ -10,7 +10,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
-#include "Settings/MazeSettings.h"
+#include "Settings/MazeLevelSettings.h"
 
 namespace
 {
@@ -22,7 +22,7 @@ namespace
 		}
 
 	const FString LevelName = UGameplayStatics::GetCurrentLevelName(World, true);
-	return LevelName.Equals(GetDefault<UMazeSettings>()->GetMazeLevelName(), ESearchCase::CaseSensitive);
+	return LevelName.Equals(GetDefault<UMazeLevelSettings>()->GetMazeLevelName(), ESearchCase::CaseSensitive);
 	}
 }
 

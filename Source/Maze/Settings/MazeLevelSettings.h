@@ -2,19 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "MazeSettings.generated.h"
+#include "MazeLevelSettings.generated.h"
 
 /**
  * Centralized level path settings for the Maze project.
  * Editable from Project Settings → Game → Maze.
  */
 UCLASS(config=Game, defaultconfig, meta=(DisplayName="Maze"))
-class MAZE_API UMazeSettings : public UDeveloperSettings
+class MAZE_API UMazeLevelSettings : public UDeveloperSettings
 {
     GENERATED_BODY()
 
 public:
-    UMazeSettings();
+    UMazeLevelSettings();
 
     virtual FName GetCategoryName() const override { return FName(TEXT("Game")); }
 

@@ -1,6 +1,6 @@
-﻿#include "MazeSettings.h"
+﻿#include "MazeLevelSettings.h"
 
-UMazeSettings::UMazeSettings()
+UMazeLevelSettings::UMazeLevelSettings()
 {
     TitleLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/Levels/TitleLevel.TitleLevel")));
     MazeLevel  = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/Levels/MazeLevel.MazeLevel")));
