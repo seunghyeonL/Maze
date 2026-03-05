@@ -7,7 +7,11 @@
 
 #include "OnlineSubsystem/SOSManager.h"
 
-#include "Audio/AudioSubsystem.h"
+#include "UI/AudioSettingsWidget.h"
+#include "Settings/MazeUserSettings.h"
+#include "AudioDevice.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
@@ -50,14 +54,7 @@ void ATitlePlayerController::BeginPlay()
 
 	RefreshUI();
 
-	if (UAudioSubsystem* AudioSub = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAudioSubsystem>() : nullptr)
-	{
-		UE_LOG(LogMazeAudio, Log, TEXT("=== TitlePC::BeginPlay === World=%s, NetMode=%d, AudioSub=%s"),
-			GetWorld() ? *GetWorld()->GetMapName() : TEXT("NULL"),
-			GetWorld() ? static_cast<int32>(GetWorld()->GetNetMode()) : -1,
-			AudioSub ? TEXT("VALID") : TEXT("NULL"));
-		AudioSub->InitializeAudio();
-	}
+	InitializeAudio();
 }
 
 void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -221,4 +218,109 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 	}
 
 	RefreshUI();
+}
+
+void ATitlePlayerController::InitializeAudio()
+{
+	if (!MasterSoundMix)
+	{
+		return;
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		if (FAudioDeviceHandle AudioDevice = World->GetAudioDevice())
+		{
+			AudioDevice->SetBaseSoundMix(MasterSoundMix);
+		}
+	}
+
+	ApplyAudioSettings();
+}
+
+void ATitlePlayerController::ApplyAudioSettings()
+{
+	if (!MasterSoundMix)
+	{
+		return;
+	}
+
+	UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings();
+	if (!Settings)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	FAudioDeviceHandle AudioDevice = World->GetAudioDevice();
+	if (!AudioDevice.IsValid())
+	{
+		return;
+	}
+
+	const float Master = Settings->GetMasterVolume();
+	const float Pitch  = 1.f;
+	const float Fade   = 0.1f;
+
+	if (MasterSoundClass)
+	{
+		AudioDevice->SetSoundMixClassOverride(MasterSoundMix, MasterSoundClass, Master, Pitch, Fade, true);
+	}
+	if (BGMSoundClass)
+	{
+		AudioDevice->SetSoundMixClassOverride(MasterSoundMix, BGMSoundClass, Settings->GetBGMVolume() * Master, Pitch, Fade, false);
+	}
+	if (SFXSoundClass)
+	{
+		AudioDevice->SetSoundMixClassOverride(MasterSoundMix, SFXSoundClass, Settings->GetSFXVolume() * Master, Pitch, Fade, false);
+	}
+}
+
+void ATitlePlayerController::ToggleAudioSettings()
+{
+	if (!AudioSettingsWidgetClass)
+	{
+		return;
+	}
+
+	bAudioSettingsOpen = !bAudioSettingsOpen;
+
+	if (bAudioSettingsOpen)
+	{
+		AudioSettingsWidgetInstance = CreateWidget<UAudioSettingsWidget>(this, AudioSettingsWidgetClass);
+		if (!AudioSettingsWidgetInstance)
+		{
+			bAudioSettingsOpen = false;
+			return;
+		}
+
+		AudioSettingsWidgetInstance->OnCloseRequested.BindUObject(this, &ATitlePlayerController::ToggleAudioSettings);
+		AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &ATitlePlayerController::ApplyAudioSettings);
+		AudioSettingsWidgetInstance->AddToViewport(100);
+
+		// Title은 이미 UI 모드이므로 위젯에 포커스만 설정
+		SetInputMode(FInputModeGameAndUI().SetWidgetToFocus(AudioSettingsWidgetInstance->TakeWidget()));
+	}
+	else
+	{
+		if (AudioSettingsWidgetInstance)
+		{
+			AudioSettingsWidgetInstance->RemoveFromParent();
+			AudioSettingsWidgetInstance = nullptr;
+		}
+
+		// ⚠️ Title 화면 UI 모드 복원 — MazePC처럼 GameOnly로 전환하면 안 된다!
+		// ActiveWidget(TitleWidget)에 대한 UI 입력 모드로 복원
+		SetupUIInput(ActiveWidget);
+
+		if (UMazeUserSettings* S = UMazeUserSettings::GetMazeUserSettings())
+		{
+			S->SaveSettings();
+		}
+	}
 }

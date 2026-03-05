@@ -3,7 +3,7 @@
 #include "TitleWidget.h"
 
 #include "UIFlowSubsystem.h"
-#include "Audio/AudioSubsystem.h"
+#include "PlayerController/TitlePlayerController.h"
 
 #include "Components/Button.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -73,8 +73,8 @@ void UTitleWidget::HandleExitClicked()
 void UTitleWidget::HandleSettingsClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title Settings clicked"));
-	if (UAudioSubsystem* AudioSub = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAudioSubsystem>() : nullptr)
+	if (ATitlePlayerController* TitlePC = Cast<ATitlePlayerController>(GetOwningPlayer()))
 	{
-		AudioSub->ToggleAudioSettings(GetOwningPlayer());
+		TitlePC->ToggleAudioSettings();
 	}
 }
