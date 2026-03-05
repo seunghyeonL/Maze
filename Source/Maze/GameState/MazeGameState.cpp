@@ -45,7 +45,7 @@ void AMazeGameState::OnRep_Phase()
         // Start BGM loop
         if (BGMSound)
         {
-            BGMComponent = UGameplayStatics::SpawnSound2D(this, BGMSound, 0.7);
+            BGMComponent = UGameplayStatics::SpawnSound2D(this, BGMSound);
             if (BGMComponent)
             {
                 BGMComponent->bAutoDestroy = false;  // Manual control for Stop()

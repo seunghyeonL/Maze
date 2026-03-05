@@ -32,9 +32,9 @@ void UAudioSettingsWidget::InitializeSliderValues()
 	BGMVolumeSlider->SetValue(Settings->GetBGMVolume());
 	SFXVolumeSlider->SetValue(Settings->GetSFXVolume());
 
-	MasterValueText->SetText(FText::AsNumber(Settings->GetMasterVolume()));
-	BGMValueText->SetText(FText::AsNumber(Settings->GetBGMVolume()));
-	SFXValueText->SetText(FText::AsNumber(Settings->GetSFXVolume()));
+	MasterValueText->SetText(FText::AsNumber(Settings->GetMasterVolume() * 100));
+	BGMValueText->SetText(FText::AsNumber(Settings->GetBGMVolume() * 100));
+	SFXValueText->SetText(FText::AsNumber(Settings->GetSFXVolume() * 100));
 
 	bInitializing = false;
 }
@@ -49,7 +49,7 @@ void UAudioSettingsWidget::OnMasterVolumeChanged(float Value)
 	if (UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings())
 	{
 		Settings->SetMasterVolume(Value);
-		MasterValueText->SetText(FText::AsNumber(Value));
+		MasterValueText->SetText(FText::AsNumber(Value * 100));
 	}
 
 	OnVolumeUpdated.ExecuteIfBound();
@@ -65,7 +65,7 @@ void UAudioSettingsWidget::OnBGMVolumeChanged(float Value)
 	if (UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings())
 	{
 		Settings->SetBGMVolume(Value);
-		BGMValueText->SetText(FText::AsNumber(Value));
+		BGMValueText->SetText(FText::AsNumber(Value * 100));
 	}
 
 	OnVolumeUpdated.ExecuteIfBound();
@@ -81,7 +81,7 @@ void UAudioSettingsWidget::OnSFXVolumeChanged(float Value)
 	if (UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings())
 	{
 		Settings->SetSFXVolume(Value);
-		SFXValueText->SetText(FText::AsNumber(Value));
+		SFXValueText->SetText(FText::AsNumber(Value * 100));
 	}
 
 	OnVolumeUpdated.ExecuteIfBound();
