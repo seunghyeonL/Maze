@@ -47,13 +47,14 @@ void UAudioSubsystem::InitializeAudio()
 		return;
 	}
 
-	// Defer to next tick: during ServerTravel the AudioDevice's adjuster
-	// hierarchy is not fully ready in BeginPlay, causing
-	// RecursiveApplyAdjuster crashes in packaged builds.
-	World->GetTimerManager().ClearTimer(AudioInitTimerHandle);
-	UE_LOG(LogMazeAudio, Log, TEXT("InitializeAudio: Timer scheduled on World=%s (Ptr=0x%p)"), *World->GetMapName(), World);
-	World->GetTimerManager().SetTimerForNextTick(
-		FTimerDelegate::CreateUObject(this, &UAudioSubsystem::InitializeAudioDeferred));
+	// Defer by 0.1s: SetTimerForNextTick fires in the same frame during ServerTravel
+	// level loading (BeginPlay → timer processing happen in one frame), so adjuster
+	// hierarchy is still incomplete when SetSoundMixClassOverride is called.
+	// A real 0.1s delay ensures AudioDevice::Update() stabilizes the adjuster tree first.
+	UE_LOG(LogMazeAudio, Log, TEXT("InitializeAudio: Timer scheduled (0.1s delay) on World=%s (Ptr=0x%p)"), *World->GetMapName(), World);
+	World->GetTimerManager().SetTimer(AudioInitTimerHandle,
+		FTimerDelegate::CreateUObject(this, &UAudioSubsystem::InitializeAudioDeferred),
+		0.1f, false);
 }
 
 void UAudioSubsystem::InitializeAudioDeferred()
