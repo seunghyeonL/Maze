@@ -81,7 +81,7 @@ protected:
     void OnStunTagChanged(const FGameplayTag Tag, int32 NewCount);
 
     void OnAttackInput(const FInputActionValue& Value);
-
+    
     bool bAbilitiesGranted = false;
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

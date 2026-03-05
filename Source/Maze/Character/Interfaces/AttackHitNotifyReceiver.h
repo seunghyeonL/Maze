@@ -20,4 +20,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void ResetAttackNotifySpamGuard_Server();
+	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void PlayHitSound();
 };
