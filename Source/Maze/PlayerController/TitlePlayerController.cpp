@@ -7,6 +7,7 @@
 
 #include "OnlineSubsystem/SOSManager.h"
 
+#include "Audio/AudioSubsystem.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
@@ -48,6 +49,11 @@ void ATitlePlayerController::BeginPlay()
 	}
 
 	RefreshUI();
+
+	if (UAudioSubsystem* AudioSub = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAudioSubsystem>() : nullptr)
+	{
+		AudioSub->InitializeAudio();
+	}
 }
 
 void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)

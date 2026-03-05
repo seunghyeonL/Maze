@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -24,6 +24,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* ExitButton;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* SettingsButton;
+
 	UPROPERTY()
 	UUIFlowSubsystem* UIFlowSubsystem = nullptr;
 
@@ -32,6 +35,9 @@ protected:
 
 	UFUNCTION()
 	void HandleExitClicked();
+
+	UFUNCTION()
+	void HandleSettingsClicked();
 
 private:
 	void CacheSubsystems();

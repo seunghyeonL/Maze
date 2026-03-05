@@ -3,6 +3,7 @@
 #include "TitleWidget.h"
 
 #include "UIFlowSubsystem.h"
+#include "Audio/AudioSubsystem.h"
 
 #include "Components/Button.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -35,6 +36,16 @@ void UTitleWidget::NativeConstruct()
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: ExitButton missing"));
 	}
 
+	if (SettingsButton)
+	{
+		SettingsButton->OnClicked.RemoveDynamic(this, &UTitleWidget::HandleSettingsClicked);
+		SettingsButton->OnClicked.AddDynamic(this, &UTitleWidget::HandleSettingsClicked);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeUI: SettingsButton missing"));
+	}
+
 	SetKeyboardFocus();
 }
 
@@ -57,4 +68,13 @@ void UTitleWidget::HandleExitClicked()
 {
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title Exit clicked"));
 	UKismetSystemLibrary::QuitGame(this, GetOwningPlayer(), EQuitPreference::Quit, true);
+}
+
+void UTitleWidget::HandleSettingsClicked()
+{
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title Settings clicked"));
+	if (UAudioSubsystem* AudioSub = GetGameInstance() ? GetGameInstance()->GetSubsystem<UAudioSubsystem>() : nullptr)
+	{
+		AudioSub->ToggleAudioSettings(GetOwningPlayer());
+	}
 }
