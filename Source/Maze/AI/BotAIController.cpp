@@ -34,6 +34,7 @@ ABotAIController::ABotAIController()
 
     // Bind perception callback
     BotPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ABotAIController::OnTargetPerceptionUpdated);
+    BotPerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &ABotAIController::OnTargetPerceptionForgotten);
 }
 
 void ABotAIController::OnPossess(APawn* InPawn)
@@ -149,11 +150,12 @@ void ABotAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stim
             StateTreeComponent->SendStateTreeEvent(Event);
         }
     }
-    else
-    {
-        // Lost sight
-        PerceivedPlayer = nullptr;
-    }
+    
+}
+
+void ABotAIController::OnTargetPerceptionForgotten(AActor* Actor)
+{
+    PerceivedPlayer = nullptr;
 }
 
 AActor* ABotAIController::GetPerceivedPlayer() const
