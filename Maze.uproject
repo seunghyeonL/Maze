@@ -27,7 +27,7 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "SteamSockets",
@@ -35,7 +35,7 @@
 		},
 		{
 			"Name": "SocketSubsystemSteamIP",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "StateTree",
