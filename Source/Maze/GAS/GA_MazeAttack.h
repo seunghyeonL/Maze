@@ -30,6 +30,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
 	TSubclassOf<UGameplayEffect> InvincibilityEffectClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Hit")
+	TSubclassOf<UGameplayEffect> HitSoundEffectClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
 	float TraceRadius = 75.f;

@@ -34,13 +34,13 @@ void UGA_MazeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 	
 	// RPC spam guard
-	if (AActor* Avatar = GetAvatarActorFromActorInfo(); Avatar && Avatar->HasAuthority())
-	{
-		if (Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
-		{
-			IAttackHitNotifyReceiver::Execute_ResetAttackNotifySpamGuard_Server(Avatar);
-		}
-	}
+	// if (AActor* Avatar = GetAvatarActorFromActorInfo(); Avatar && Avatar->HasAuthority())
+	// {
+	// 	if (Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
+	// 	{
+	// 		IAttackHitNotifyReceiver::Execute_ResetAttackNotifySpamGuard_Server(Avatar);
+	// 	}
+	// }
 
 	if (!AttackMontage)
 	{
@@ -175,9 +175,21 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 		}
 	}
 	
-	if (bHitSuccess && Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
+	// if (bHitSuccess && Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
+	// {
+	// 	IAttackHitNotifyReceiver::Execute_PlayHitSound(Avatar);
+	// }
+	
+	if (bHitSuccess && HitSoundEffectClass)
 	{
-		IAttackHitNotifyReceiver::Execute_PlayHitSound(Avatar);
+		FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+		Context.AddInstigator(Avatar, Avatar);
+		FGameplayEffectSpecHandle HitSpec = SourceASC->MakeOutgoingSpec(HitSoundEffectClass, 1.f, Context);
+		
+		if (HitSpec.IsValid() && HitSpec.Data.IsValid())
+		{
+			SourceASC->ApplyGameplayEffectSpecToSelf(*HitSpec.Data.Get());
+		}
 	}
 }
 

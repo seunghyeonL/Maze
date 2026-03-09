@@ -28,8 +28,6 @@ void FMazeGameplayTags::InitializeNativeTags()
 		FString("Sent by AnimNotify at attack hit window")
 	);
 
-	GameplayTags.GameplayCue_Actor_ElectricTrail = Manager.RequestGameplayTag(TEXT("GameplayCue.Actor.ElectricTrail"));
-
 	GameplayTags.StateTree_Event_Stunned = Manager.AddNativeGameplayTag(
 		FName("StateTree.Event.Stunned"),
 		FString("Sent to StateTree when stun tag applied")
@@ -43,5 +41,12 @@ void FMazeGameplayTags::InitializeNativeTags()
 	GameplayTags.StateTree_Event_PlayerSpotted = Manager.AddNativeGameplayTag(
 		FName("StateTree.Event.PlayerSpotted"),
 		FString("Sent to StateTree when player detected by perception")
+	);
+	
+	GameplayTags.GameplayCue_Actor_ElectricTrail = Manager.RequestGameplayTag(TEXT("GameplayCue.Actor.ElectricTrail"));
+	
+	GameplayTags.GameplayCue_Static_HitSound = Manager.AddNativeGameplayTag(
+		FName("GameplayCue.Static.HitSound"),
+		FString("Hit sound cue tag")
 	);
 }

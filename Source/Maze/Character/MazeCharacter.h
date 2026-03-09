@@ -23,13 +23,6 @@ public:
     AMazeCharacter();
 
     virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-    
-    UFUNCTION(Server, Reliable)
-    void Server_RequestAttackHitEvent(int32 NotifyId);
-    
-    virtual void NotifyAttackHitWindow_Implementation(int32 NotifyId) override;
-    
-    virtual void ResetAttackNotifySpamGuard_Server_Implementation() override;
 
 protected:
     virtual void PossessedBy(AController* NewController) override;

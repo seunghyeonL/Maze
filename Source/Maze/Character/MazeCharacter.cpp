@@ -29,39 +29,6 @@ UAbilitySystemComponent* AMazeCharacter::GetAbilitySystemComponent() const
     return ASC;
 }
 
-void AMazeCharacter::Server_RequestAttackHitEvent_Implementation(int32 NotifyId)
-{
-    // ✅ 서버 스팸 방지: 같은 NotifyId는 무시
-    if (NotifyId == LastProcessedAttackNotifyId_Server)
-    {
-        return;
-    }
-    LastProcessedAttackNotifyId_Server = NotifyId;
-    
-    // 서버에서만 실행되는 RPC 구현체
-    FGameplayEventData Payload;
-    Payload.Instigator = this;
-    Payload.Target = nullptr; // 필요하면 채우기
-
-    UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-        this,
-        FMazeGameplayTags::Get().Event_Montage_AttackHit,
-        Payload
-    );
-}
-
-void AMazeCharacter::NotifyAttackHitWindow_Implementation(int32 NotifyId)
-{
-    // 여기서 호출되는 건 보통 클라(로컬) 또는 리슨서버 로컬
-    // 원격 클라는 Server RPC로 서버에게 "히트 타이밍"을 알린다.
-    Server_RequestAttackHitEvent(NotifyId);
-}
-
-void AMazeCharacter::ResetAttackNotifySpamGuard_Server_Implementation()
-{
-    LastProcessedAttackNotifyId_Server = INDEX_NONE;
-}
-
 void AMazeCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
