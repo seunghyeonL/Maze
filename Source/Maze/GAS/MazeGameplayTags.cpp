@@ -42,11 +42,4 @@ void FMazeGameplayTags::InitializeNativeTags()
 		FName("StateTree.Event.PlayerSpotted"),
 		FString("Sent to StateTree when player detected by perception")
 	);
-	
-	GameplayTags.GameplayCue_Actor_ElectricTrail = Manager.RequestGameplayTag(TEXT("GameplayCue.Actor.ElectricTrail"));
-	
-	GameplayTags.GameplayCue_Static_HitSound = Manager.AddNativeGameplayTag(
-		FName("GameplayCue.Static.HitSound"),
-		FString("Hit sound cue tag")
-	);
 }

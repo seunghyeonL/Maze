@@ -38,10 +38,6 @@ struct MAZE_API FMazeGameplayTags
 	FGameplayTag StateTree_Event_Stunned;
 	FGameplayTag StateTree_Event_StunEnded;
 	FGameplayTag StateTree_Event_PlayerSpotted;
-	
-	// Gameplay Cue Tags
-	FGameplayTag GameplayCue_Actor_ElectricTrail;
-	FGameplayTag GameplayCue_Static_HitSound;
 
 private:
 	static FMazeGameplayTags GameplayTags;
