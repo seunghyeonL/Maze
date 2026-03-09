@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "Interfaces/AttackHitNotifyReceiver.h"
 #include "GameplayTagContainer.h"
 #include "MazeCharacter.generated.h"
 
@@ -15,7 +14,7 @@ struct FInputActionValue;
 struct FGameplayTag;
 
 UCLASS()
-class MAZE_API AMazeCharacter : public ACharacter, public IAbilitySystemInterface, public IAttackHitNotifyReceiver
+class MAZE_API AMazeCharacter : public ACharacter, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 

@@ -5,7 +5,6 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayTag.h"
-#include "Character/Interfaces/AttackHitNotifyReceiver.h"
 #include "GAS/MazeGameplayTags.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
@@ -32,15 +31,6 @@ void UGA_MazeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	
-	// RPC spam guard
-	// if (AActor* Avatar = GetAvatarActorFromActorInfo(); Avatar && Avatar->HasAuthority())
-	// {
-	// 	if (Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
-	// 	{
-	// 		IAttackHitNotifyReceiver::Execute_ResetAttackNotifySpamGuard_Server(Avatar);
-	// 	}
-	// }
 
 	if (!AttackMontage)
 	{
@@ -174,11 +164,6 @@ void UGA_MazeAttack::OnAttackHitEvent(FGameplayEventData Payload)
 			}
 		}
 	}
-	
-	// if (bHitSuccess && Avatar->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
-	// {
-	// 	IAttackHitNotifyReceiver::Execute_PlayHitSound(Avatar);
-	// }
 	
 	if (bHitSuccess && HitSoundEffectClass)
 	{

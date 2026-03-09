@@ -4,7 +4,6 @@
 #include "MazeGameplayTags.h"
 #include "Abilities/GameplayAbilityTypes.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Character/Interfaces/AttackHitNotifyReceiver.h"
 
 void UAN_MazeAttackHitNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
@@ -30,11 +29,6 @@ void UAN_MazeAttackHitNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 		FMazeGameplayTags::Get().Event_Montage_AttackHit,
 		Payload
 	);
-	//
-	// if (Owner->GetClass()->ImplementsInterface(UAttackHitNotifyReceiver::StaticClass()))
-	// {
-	// 	IAttackHitNotifyReceiver::Execute_NotifyAttackHitWindow(Owner, NotifyId);
-	// }
 }
 
 FString UAN_MazeAttackHitNotify::GetNotifyName_Implementation() const
