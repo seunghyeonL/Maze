@@ -54,10 +54,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MessageText;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* ConfirmButton;
 
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	UButton* CancelButton;
 
 private:
