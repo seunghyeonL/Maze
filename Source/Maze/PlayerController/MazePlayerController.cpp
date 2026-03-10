@@ -6,6 +6,10 @@
 #include "AudioDevice.h"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
+#include "UI/UIFlowSubsystem.h"
+#include "OnlineSubsystem/SOSManager.h"
+#include "Engine/Engine.h"
+#include "Settings/MazeLevelSettings.h"
 
 void AMazePlayerController::BeginPlay()
 {
@@ -20,11 +24,22 @@ void AMazePlayerController::BeginPlay()
 	SetInputMode(FInputModeGameOnly());
 
 	InitializeAudio();
+
+	if (GEngine)
+	{
+		GEngine->OnNetworkFailure().RemoveAll(this);
+		GEngine->OnNetworkFailure().AddUObject(this, &AMazePlayerController::HandleNetworkFailure);
+	}
 }
 
 void AMazePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	CleanupAudio();
+
+	if (GEngine)
+	{
+		GEngine->OnNetworkFailure().RemoveAll(this);
+	}
 	Super::EndPlay(EndPlayReason);
 }
 
@@ -175,4 +190,36 @@ void AMazePlayerController::CleanupAudio()
 	}
 
 	AudioDevice->PopSoundMixModifier(MasterSoundMix);
+}
+
+void AMazePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	(void)World;
+	(void)NetDriver;
+
+	if (!IsLocalController())
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("MazePC: NetworkFailure - Type: %d, Error: %s"),
+		static_cast<int32>(FailureType), *ErrorString);
+
+	// 에러 메시지 설정: TitleLevel에 도착 후 ConsumePendingError()로 표시됨
+	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
+	{
+		const FText ErrorMessage = FText::FromString(TEXT("호스트와의 연결이 끊어졌습니다."));
+		Flow->SetPendingError(ErrorMessage);
+		Flow->SetScreenMatch();
+	}
+
+	// 세션 정리: 이후 세션 생성/참가가 "Session already exists" 에러 없이 작동하도록
+	if (USOSManager* SOS = GetGameInstance() ? GetGameInstance()->GetSubsystem<USOSManager>() : nullptr)
+	{
+		SOS->DestroySession();
+	}
+
+	// TitleLevel로 복귀
+	const FString TitleLevelPath = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();
+	ClientTravel(TitleLevelPath, TRAVEL_Absolute);
 }

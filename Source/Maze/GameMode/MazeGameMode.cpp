@@ -58,6 +58,41 @@ void AMazeGameMode::PostLogin(APlayerController* NewPlayer)
 	TryStartGameFlow();
 }
 
+void AMazeGameMode::Logout(AController* Exiting)
+{
+	// 커스텀 정리: phase-aware ArrivedPlayers 관리
+	if (Exiting)
+	{
+		if (!bGameFlowStarted)
+		{
+			// 게임 시작 전: Remove 안전 (MazeTargetPoints 매핑이 아직 없음)
+			ArrivedPlayers.Remove(Exiting);
+		}
+		else
+		{
+			// 게임 시작 후: null-out으로 인덱스 매핑 보존
+			// ArrivedPlayers[i] ↔ MazeTargetPoints[i] 매핑이 TeleportPlayers에서 사용됨
+			const int32 Index = ArrivedPlayers.Find(Exiting);
+			if (Index != INDEX_NONE)
+			{
+				ArrivedPlayers[Index] = nullptr;
+			}
+		}
+
+		// 끊긴 플레이어의 Pawn 파괴
+		if (APawn* LeavingPawn = Exiting->GetPawn())
+		{
+			if (IsValid(LeavingPawn))
+			{
+				LeavingPawn->Destroy();
+			}
+		}
+	}
+
+	// 엔진 내부 정리 (NumPlayers, GameSession, InactivePlayerArray 등)
+	Super::Logout(Exiting);
+}
+
 void AMazeGameMode::TryStartGameFlow()
 {
 	if (bGameFlowStarted || bMatchEnded) return;
