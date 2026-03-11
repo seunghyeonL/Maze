@@ -35,12 +35,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UListView* LobbyList;
 
-	/** 로딩 오버레이 (선택적 - BP에서 바인딩) */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 로딩 오버레이 (BP에서 바인딩) */
+	UPROPERTY(meta = (BindWidget))
 	ULoadingOverlayWidget* LoadingOverlay;
 
-	/** 알림 모달 (선택적 - BP에서 바인딩) */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 알림 모달 (BP에서 바인딩) */
+	UPROPERTY(meta = (BindWidget))
 	UCommonModalWidget* AlertModal;
 
 	UPROPERTY()

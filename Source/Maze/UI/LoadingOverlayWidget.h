@@ -35,7 +35,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LoadingText;
 
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	UCircularThrobber* LoadingThrobber;
 
 private:

@@ -63,10 +63,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* CloseButton;
 
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	UButton* ExitToTitleButton;
 
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	UCommonModalWidget* ConfirmExitModal;
 
 private:
