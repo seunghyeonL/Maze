@@ -14,22 +14,6 @@
 #include "Sound/SoundClass.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/Engine.h"
-#include "Kismet/GameplayStatics.h"
-#include "Settings/MazeLevelSettings.h"
-
-namespace
-{
-	bool IsMazeLevel(const UWorld* World)
-	{
-		if (!World)
-		{
-			return false;
-		}
-
-	const FString LevelName = UGameplayStatics::GetCurrentLevelName(World, true);
-	return LevelName.Equals(GetDefault<UMazeLevelSettings>()->GetMazeLevelName(), ESearchCase::CaseSensitive);
-	}
-}
 
 void ATitlePlayerController::BeginPlay()
 {
@@ -87,13 +71,6 @@ void ATitlePlayerController::RefreshUI()
 	UWorld* World = GetWorld();
 	if (!World)
 	{
-		return;
-	}
-
-	if (IsMazeLevel(World))
-	{
-		ClearActiveWidget();
-		SetupGameInput();
 		return;
 	}
 
