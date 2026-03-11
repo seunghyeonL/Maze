@@ -57,6 +57,9 @@ void InitializeAudio();
 	/** 네트워크 연결 끊김 시 TitleLevel로 안전 복귀 */
 	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
+	/** ExitToTitle 버튼 확인 후 TitleLevel로 복귀 */
+	void HandleExitToTitle();
+
 	UPROPERTY()
 	TObjectPtr<UAudioSettingsWidget> AudioSettingsWidgetInstance;
 

@@ -1,10 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "UI/AudioSettingsWidget.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Settings/MazeUserSettings.h"
+#include "CommonModalWidget.h"
 
 void UAudioSettingsWidget::NativeConstruct()
 {
@@ -14,6 +15,12 @@ void UAudioSettingsWidget::NativeConstruct()
 	BGMVolumeSlider->OnValueChanged.AddDynamic(this, &UAudioSettingsWidget::OnBGMVolumeChanged);
 	SFXVolumeSlider->OnValueChanged.AddDynamic(this, &UAudioSettingsWidget::OnSFXVolumeChanged);
 	CloseButton->OnClicked.AddDynamic(this, &UAudioSettingsWidget::OnCloseClicked);
+
+	if (ExitToTitleButton)
+	{
+		ExitToTitleButton->OnClicked.AddDynamic(this, &UAudioSettingsWidget::OnExitToTitleClicked);
+		ExitToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
+	}
 
 	InitializeSliderValues();
 }
@@ -90,4 +97,31 @@ void UAudioSettingsWidget::OnSFXVolumeChanged(float Value)
 void UAudioSettingsWidget::OnCloseClicked()
 {
 	OnCloseRequested.ExecuteIfBound();
+}
+
+void UAudioSettingsWidget::SetExitToTitleVisible(bool bVisible)
+{
+	if (ExitToTitleButton)
+	{
+		ExitToTitleButton->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UAudioSettingsWidget::OnExitToTitleClicked()
+{
+	if (!ConfirmExitModal || ConfirmExitModal->IsShowing())
+	{
+		return;
+	}
+
+	ConfirmExitModal->OnConfirmed.AddDynamic(this, &UAudioSettingsWidget::HandleExitConfirmed);
+	ConfirmExitModal->ShowConfirm(
+		FText::FromString(TEXT("나가기")),
+		FText::FromString(TEXT("게임에서 나가시겠습니까?"))
+	);
+}
+
+void UAudioSettingsWidget::HandleExitConfirmed()
+{
+	OnExitToTitleRequested.ExecuteIfBound();
 }

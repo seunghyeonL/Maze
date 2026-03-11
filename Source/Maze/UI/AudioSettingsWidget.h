@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,9 +9,11 @@
 class USlider;
 class UTextBlock;
 class UButton;
+class UCommonModalWidget;
 
 DECLARE_DELEGATE(FOnAudioSettingsCloseRequested);
 DECLARE_DELEGATE(FOnAudioVolumeUpdated);
+DECLARE_DELEGATE(FOnExitToTitleRequested);
 
 /**
  * 인게임 볼륨 조절 팝업 위젯
@@ -28,6 +30,12 @@ public:
 
 	/** Controller에서 바인딩 — 볼륨 변경 시 오디오 적용 요청 */
 	FOnAudioVolumeUpdated OnVolumeUpdated;
+
+	/** Controller에서 바인딩 — 게임 종료 요청 */
+	FOnExitToTitleRequested OnExitToTitleRequested;
+
+	/** ExitToTitleButton 표시/숨김 제어 */
+	void SetExitToTitleVisible(bool bVisible);
 
 protected:
 	virtual void NativeConstruct() override;
@@ -55,6 +63,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* CloseButton;
 
+	UPROPERTY(meta = (BindWidgetOptional))
+	UButton* ExitToTitleButton;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	UCommonModalWidget* ConfirmExitModal;
+
 private:
 	/** 현재 설정값으로 슬라이더/텍스트 초기화 */
 	void InitializeSliderValues();
@@ -75,4 +89,10 @@ private:
 
 	UFUNCTION()
 	void OnCloseClicked();
+
+	UFUNCTION()
+	void OnExitToTitleClicked();
+
+	UFUNCTION()
+	void HandleExitConfirmed();
 };

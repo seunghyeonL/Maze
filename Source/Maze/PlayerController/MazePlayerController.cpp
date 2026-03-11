@@ -10,6 +10,7 @@
 #include "OnlineSubsystem/SOSManager.h"
 #include "Engine/Engine.h"
 #include "Settings/MazeLevelSettings.h"
+#include "Kismet/GameplayStatics.h"
 
 void AMazePlayerController::BeginPlay()
 {
@@ -73,6 +74,8 @@ void AMazePlayerController::ToggleAudioSettings()
 
 		AudioSettingsWidgetInstance->OnCloseRequested.BindUObject(this, &AMazePlayerController::ToggleAudioSettings);
 		AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &AMazePlayerController::ApplyAudioSettings);
+		AudioSettingsWidgetInstance->SetExitToTitleVisible(true);
+		AudioSettingsWidgetInstance->OnExitToTitleRequested.BindUObject(this, &AMazePlayerController::HandleExitToTitle);
 		AudioSettingsWidgetInstance->AddToViewport(100);
 
 		bShowMouseCursor = true;
@@ -222,4 +225,38 @@ void AMazePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* NetD
 	// TitleLevel로 복귀
 	const FString TitleLevelPath = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();
 	ClientTravel(TitleLevelPath, TRAVEL_Absolute);
+}
+
+void AMazePlayerController::HandleExitToTitle()
+{
+	// 1. AudioSettings 위젯 정리
+	bAudioSettingsOpen = false;
+	if (AudioSettingsWidgetInstance)
+	{
+		AudioSettingsWidgetInstance->RemoveFromParent();
+		AudioSettingsWidgetInstance = nullptr;
+	}
+	bShowMouseCursor = false;
+	SetInputMode(FInputModeGameOnly());
+
+	if (UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings())
+	{
+		Settings->SaveSettings();
+	}
+
+	// 2. UIFlowSubsystem: TitleWidget이 표시되도록 Screen 설정
+	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
+	{
+		Flow->SetScreenTitle();
+	}
+
+	// 3. 세션 정리
+	if (USOSManager* SOS = GetGameInstance() ? GetGameInstance()->GetSubsystem<USOSManager>() : nullptr)
+	{
+		SOS->DestroySession();
+	}
+
+	// 4. TitleLevel로 standalone 복귀
+	const FString TitleLevelPath = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();
+	UGameplayStatics::OpenLevel(this, FName(*TitleLevelPath), true);
 }
