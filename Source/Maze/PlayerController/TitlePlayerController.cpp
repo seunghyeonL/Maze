@@ -352,7 +352,7 @@ void ATitlePlayerController::ToggleAudioSettings()
 		// [ServerTravel crash fix] TitleLevel에서 SoundMix 조정 안 함 — 값은 MazeUserSettings에 자동 저장됨
 		// AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &ATitlePlayerController::ApplyAudioSettings);
 		AudioSettingsWidgetInstance->AddToViewport(100);
-
+		
 		// Title은 이미 UI 모드이므로 위젯에 포커스만 설정
 		SetInputMode(FInputModeGameAndUI().SetWidgetToFocus(AudioSettingsWidgetInstance->TakeWidget()));
 	}

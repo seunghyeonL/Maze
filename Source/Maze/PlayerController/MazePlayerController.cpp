@@ -74,9 +74,9 @@ void AMazePlayerController::ToggleAudioSettings()
 
 		AudioSettingsWidgetInstance->OnCloseRequested.BindUObject(this, &AMazePlayerController::ToggleAudioSettings);
 		AudioSettingsWidgetInstance->OnVolumeUpdated.BindUObject(this, &AMazePlayerController::ApplyAudioSettings);
-		AudioSettingsWidgetInstance->SetExitToTitleVisible(true);
 		AudioSettingsWidgetInstance->OnExitToTitleRequested.BindUObject(this, &AMazePlayerController::HandleExitToTitle);
 		AudioSettingsWidgetInstance->AddToViewport(100);
+		AudioSettingsWidgetInstance->SetExitToTitleVisible(true);
 
 		bShowMouseCursor = true;
 		SetInputMode(FInputModeGameAndUI());
