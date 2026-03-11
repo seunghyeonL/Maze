@@ -296,7 +296,7 @@ void UMatchWidget::HandleSessionJoined(bool bSuccess)
 		HideLoading();
 		ShowAlert(
 			FText::FromString(TEXT("오류")),
-			FText::FromString(TEXT("로비 참가에 실패했습니다.\n방이 가득 찼거나 연결할 수 없습니다."))
+			FText::FromString(TEXT("로비 참가에 실패했습니다."))
 		);
 	}
 }
