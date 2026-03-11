@@ -192,20 +192,30 @@ void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* Net
 	if (Flow)
 	{
 		// PreLogin 거부 메시지나 기타 에러를 pending error로 저장
+		// Hangul Syllables 감지 (U+AC00~U+D7AF): 한국어 PreLogin 거부 메시지 보존
+		bool bHasKorean = false;
+		for (const TCHAR Ch : ErrorString)
+		{
+			if (Ch >= 0xAC00 && Ch <= 0xD7AF)
+			{
+				bHasKorean = true;
+				break;
+			}
+		}
+
 		FText ErrorMessage;
 		if (ErrorString.Contains(TEXT("full")) || ErrorString.Contains(TEXT("Server is full")))
 		{
 			ErrorMessage = FText::FromString(TEXT("방이 가득 찼습니다."));
 		}
-		else if (!ErrorString.IsEmpty())
+		else if (bHasKorean)
 		{
-			ErrorMessage = FText::Format(
-				FText::FromString(TEXT("연결 실패: {0}")),
-				FText::FromString(ErrorString)
-			);
+			// 한국어 PreLogin 메시지 (예: "게임이 이미 시작됐습니다.") → 그대로 표시
+			ErrorMessage = FText::FromString(ErrorString);
 		}
 		else
 		{
+			// 영문 엔진 메시지 또는 빈 문자열 → 한국어 기본 메시지
 			ErrorMessage = FText::FromString(TEXT("서버와의 연결이 끊어졌습니다."));
 		}
 

@@ -270,23 +270,6 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 
 	UWorld* World = GetWorld();
 	const bool bHost = IsLobbyHost();
-	if (bHost && World && World->GetNetMode() != NM_Client)
-	{
-		if (World->GetAuthGameMode())
-		{
-			for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
-			{
-				APlayerController* PC = It->Get();
-				if (!PC || PC->IsLocalController())
-				{
-					continue;
-				}
-
-				// Force remote clients to disconnect and return to TitleLevel.
-				PC->ClientTravel(TitleLevelUrl, ETravelType::TRAVEL_Absolute);
-			}
-		}
-	}
 
 	if (UIFlowSubsystem)
 	{
@@ -314,6 +297,10 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 	if (!bHost && World && World->GetNetMode() == NM_Client)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeUI: Client returning to TitleLevel as Standalone"));
+		if (SOSManager)
+		{
+			SOSManager->DestroySession();
+		}
 		UGameplayStatics::OpenLevel(this, FName(*TitleLevelUrl), true);
 		return;
 	}
