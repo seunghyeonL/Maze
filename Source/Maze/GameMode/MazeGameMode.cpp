@@ -118,6 +118,8 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/GoalActorClass not set in BP defaults!"));
 		return;
 	}
+	
+	TRACE_BOOKMARK(TEXT("MazeGameMode: GenerateAndSpawnMaze"));
 
 	const int32 PlayerNum = ArrivedPlayers.Num();
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze %dx%d Players=%d CellSize=%.0f"),
