@@ -147,6 +147,8 @@ void AMazeGameState::OnRep_MazeSeed()
 {
     // Listen server guard — server already spawned walls in GenerateAndSpawnMaze
     if (HasAuthority()) return;
+    
+    TRACE_BOOKMARK(TEXT("AMazeGameState::OnRep_MazeSeed"));
 
     // Sentinel guard — ignore initial value (0) or invalid sizes
     if (MazeSeed == 0 || MazeWidth < 2 || MazeHeight < 2) return;
