@@ -90,7 +90,7 @@ int32 UMazeGenerator::SpawnWalls(
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.bCreateActorPackage = false;
+	// SpawnParams.bCreateActorPackage = false;
 	
 	int32 SpawnedWallCount = 0;
 	auto SpawnWall = [&](const FVector& Pos, const FRotator& Rot)
