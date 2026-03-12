@@ -3,4 +3,5 @@
 AMazeTargetPoint::AMazeTargetPoint()
 {
     bReplicates = true;
+    NetDormancy = DORM_Initial;
 }
