@@ -53,7 +53,7 @@ protected:
 	float ReturnToLobbyDelay = 3.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
-	int32 MinExpectedPlayers = 2;
+	int32 MinExpectedPlayers = 1;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	float CountdownDuration = 10.f;

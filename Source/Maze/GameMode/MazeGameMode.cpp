@@ -255,15 +255,11 @@ int32 AMazeGameMode::GetExpectedPlayerCount() const
 					UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from ExpectedPlayers = %d"), Expected);
 					return Expected;
 				}
-
-				// fallback: 세션 최대 인원
-				const int32 Count = NamedSession->SessionSettings.NumPublicConnections;
-				UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from NumPublicConnections = %d"), Count);
-				return Count;
 			}
 		}
 	}
-	const int32 Fallback = FMath::Max(MinExpectedPlayers, NumPlayers);
+	
+	const int32 Fallback = MinExpectedPlayers;
 	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session, fallback ExpectedCount=%d"), Fallback);
 	return Fallback;
 }
