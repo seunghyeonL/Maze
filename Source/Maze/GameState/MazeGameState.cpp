@@ -14,6 +14,9 @@ void AMazeGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
     DOREPLIFETIME(AMazeGameState, Phase);
     DOREPLIFETIME(AMazeGameState, WinnerPlayer);
     DOREPLIFETIME(AMazeGameState, CountdownEndTime);
+    DOREPLIFETIME(AMazeGameState, MazeSeed);
+    DOREPLIFETIME(AMazeGameState, MazeWidth);
+    DOREPLIFETIME(AMazeGameState, MazeHeight);
 }
 
 void AMazeGameState::OnRep_Phase()
@@ -130,4 +133,39 @@ void AMazeGameState::SetWinnerPlayer(APlayerState* NewWinner)
     {
         OnRep_MatchResult();
     }
+}
+
+void AMazeGameState::SetMazeData(int32 InSeed, int32 InWidth, int32 InHeight)
+{
+    MazeSeed = InSeed;
+    MazeWidth = InWidth;
+    MazeHeight = InHeight;
+    ForceNetUpdate();
+}
+
+void AMazeGameState::OnRep_MazeSeed()
+{
+    // Listen server guard — server already spawned walls in GenerateAndSpawnMaze
+    if (HasAuthority()) return;
+
+    // Sentinel guard — ignore initial value (0) or invalid sizes
+    if (MazeSeed == 0 || MazeWidth < 2 || MazeHeight < 2) return;
+
+    // Build grid (same seed → same grid guaranteed)
+    TArray<FCellRow> Grid;
+    Grid.SetNum(MazeHeight);
+    for (auto& Row : Grid)
+    {
+        Row.Cells.SetNum(MazeWidth);
+    }
+    UMazeGenerator::BuildMazeGrid(MazeHeight, MazeWidth, MazeSeed, Grid);
+
+    // Spawn walls locally (no replication — BP_MazeWall bReplicates=false assumed)
+    if (!WallClass)
+    {
+        UE_LOG(LogTemp, Error, TEXT("MazeGameState: WallClass is null — cannot spawn walls on client"));
+        return;
+    }
+    const int32 WallCount = UMazeGenerator::SpawnWalls(this, Grid, MazeHeight, MazeWidth, CellSize, WallClass);
+    UE_LOG(LogTemp, Log, TEXT("MazeGameState: Client spawned %d walls (Seed=%d)"), WallCount, MazeSeed);
 }

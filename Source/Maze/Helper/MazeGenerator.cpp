@@ -2,8 +2,8 @@
 
 #include "MazeGenerator.h"
 
-#include "Algo/RandomShuffle.h"
 #include "GameFramework/Pawn.h"
+#include "Math/RandomStream.h"
 #include "../Actor/MazeTargetPoint.h"
 
 void UMazeGenerator::GenerateMaze(
@@ -19,158 +19,194 @@ void UMazeGenerator::GenerateMaze(
 	)
 {
 	if (!WorldContextObject)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: WorldContextObject is null"));
-        return;
-    }
+	{
+		UE_LOG(LogTemp, Error, TEXT("GenerateMaze: WorldContextObject is null"));
+		return;
+	}
 
-    UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
-    if (!World)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: Failed to get World"));
-        return;
-    }
+	if (!WallClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GenerateMaze: WallClass is null"));
+		return;
+	}
 
-    if (!WallClass)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: WallClass is null"));
-        return;
-    }
+	if (!GoalActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GenerateMaze: GoalActorClass is null"));
+		return;
+	}
 
-    if (!GoalActorClass)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: GoalActorClass is null"));
-        return;
-    }
+	if (Width < 2 || Height < 2)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GenerateMaze: Width and Height must be at least 2"));
+		return;
+	}
 
-    if (Width < 2 || Height < 2)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GenerateMaze: Width and Height must be at least 2"));
-        return;
-    }
+	if (PlayerNum < 1 || PlayerNum > 4)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GenerateMaze: PlayerNum(%d) must be 1~4"), PlayerNum);
+		return;
+	}
 
-    // 최대 4인
-    if (PlayerNum < 1 || PlayerNum > 4)
-    {
-    	UE_LOG(LogTemp, Error, TEXT("GenerateMaze: PlayerNum(%d) must be 1~4"), PlayerNum);
-        return;
-    }
+	TArray<FCellRow> Grid;
+	Grid.SetNum(Height);
+	for (auto& Row : Grid)
+	{
+		Row.Cells.SetNum(Width);
+	}
 
-    // FCell 그리드 생성 (기본값: 모든 벽 있음)
-    TArray<FCellRow> Grid;
-    Grid.SetNum(Height);
-    for (auto& Row : Grid)
-    {
-        Row.Cells.SetNum(Width);
-    }
+	const int32 Seed = FMath::Rand();
+	BuildMazeGrid(Height, Width, Seed, Grid);
+	SpawnWalls(WorldContextObject, Grid, Height, Width, CellSize, WallClass);
+	SpawnGameplayActors(WorldContextObject, Grid, Height, Width, CellSize, PlayerNum, GoalActorClass, BotClass, BotCount);
+}
 
-    BuildMazeGrid(Height, Width, Grid);
-	
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+int32 UMazeGenerator::SpawnWalls(
+	UObject* WorldContextObject,
+	const TArray<FCellRow>& Grid,
+	int32 Height,
+	int32 Width,
+	float CellSize,
+	TSubclassOf<AActor> WallClass)
+{
+	if (!WorldContextObject)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnWalls: WorldContextObject is null"));
+		return 0;
+	}
 
-    // ---- 1) 벽 스폰 ----
-    // 벽 메시 기본 방향 가정:
-    // - "가로 벽"(동서로 길게): Yaw = 0
-    // - "세로 벽"(남북으로 길게): Yaw = 90
-    //
-    // 만약 네 WallClass가 기본으로 다른 방향을 바라보면 Yaw 0/90을 바꿔주면 됨.
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnWalls: Failed to get World"));
+		return 0;
+	}
 
-    auto SpawnWall = [&](const FVector& Pos, const FRotator& Rot)
-    {
-        World->SpawnActor<AActor>(WallClass, Pos, Rot, SpawnParams);
-    };
+	if (!WallClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnWalls: WallClass is null"));
+		return 0;
+	}
 
-    // 외곽(테두리) + 내부 벽:
-    for (int32 r = 0; r < Height; ++r)
-    {
-        for (int32 c = 0; c < Width; ++c)
-        {
-            // (A) 북쪽 외곽 (r == 0): BoundaryRow = 0
-            if (r == 0)
-            {
-                const FVector Pos = HorizontalBoundaryCenter(0, c, CellSize, 0.f);
-                SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
-            }
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-            // (B) 서쪽 외곽 (c == 0): BoundaryCol = 0
-            if (c == 0)
-            {
-                const FVector Pos = VerticalBoundaryCenter(r, 0, CellSize, 0.f);
-                SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
-            }
+	int32 SpawnedWallCount = 0;
+	auto SpawnWall = [&](const FVector& Pos, const FRotator& Rot)
+	{
+		World->SpawnActor<AActor>(WallClass, Pos, Rot, SpawnParams);
+		++SpawnedWallCount;
+	};
 
-            // (C) 동쪽 경계: 내부면 (c < Width-1) 체크 후, 길이 없으면 벽 / 외곽이면 무조건 벽
-            if (c == Width - 1)
-            {
-                // 동쪽 외곽: BoundaryCol = Width
-                const FVector Pos = VerticalBoundaryCenter(r, Width, CellSize, 0.f);
-                SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
-            }
-            else
-            {
-                if (Grid[r].Cells[c].RightWall)
-                {
-                    const FVector Pos = VerticalBoundaryCenter(r, c + 1, CellSize, 0.f);
-                    SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
-                }
-            }
+	for (int32 r = 0; r < Height; ++r)
+	{
+		for (int32 c = 0; c < Width; ++c)
+		{
+			if (r == 0)
+			{
+				const FVector Pos = HorizontalBoundaryCenter(0, c, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+			}
 
-            // (D) 남쪽 경계: 내부면 (r < Height-1) 체크 후, 길이 없으면 벽 / 외곽이면 무조건 벽
-            if (r == Height - 1)
-            {
-                // 남쪽 외곽: BoundaryRow = Height
-                const FVector Pos = HorizontalBoundaryCenter(Height, c, CellSize, 0.f);
-                SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
-            }
-            else
-            {
-                if (Grid[r].Cells[c].DownWall)
-                {
-                    const FVector Pos = HorizontalBoundaryCenter(r + 1, c, CellSize, 0.f);
-                    SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
-                }
-            }
-        }
-    }
+			if (c == 0)
+			{
+				const FVector Pos = VerticalBoundaryCenter(r, 0, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+			}
 
-    // ---- 2) Goal 스폰 ----
-    {
-        int32 gr = Height / 2, gc = Width / 2;
-        // ToRC(GoalNode, Width, gr, gc);
+			if (c == Width - 1)
+			{
+				const FVector Pos = VerticalBoundaryCenter(r, Width, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+			}
+			else if (Grid[r].Cells[c].RightWall)
+			{
+				const FVector Pos = VerticalBoundaryCenter(r, c + 1, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+			}
 
-        const FVector Pos = CellCenter(gr, gc, CellSize, 0.f);
-        AActor* Goal = World->SpawnActor<AActor>(GoalActorClass, Pos, FRotator::ZeroRotator, SpawnParams);
-        UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Goal spawned at %s"), *Pos.ToString());
-    }
-	
+			if (r == Height - 1)
+			{
+				const FVector Pos = HorizontalBoundaryCenter(Height, c, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+			}
+			else if (Grid[r].Cells[c].DownWall)
+			{
+				const FVector Pos = HorizontalBoundaryCenter(r + 1, c, CellSize, 0.f);
+				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Spawned %d walls"), SpawnedWallCount);
+	return SpawnedWallCount;
+}
+
+void UMazeGenerator::SpawnGameplayActors(
+	UObject* WorldContextObject,
+	const TArray<FCellRow>& Grid,
+	int32 Height,
+	int32 Width,
+	float CellSize,
+	int32 PlayerNum,
+	TSubclassOf<AActor> GoalActorClass,
+	TSubclassOf<APawn> BotClass,
+	int32 BotCount)
+{
+	if (!WorldContextObject)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnGameplayActors: WorldContextObject is null"));
+		return;
+	}
+
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnGameplayActors: Failed to get World"));
+		return;
+	}
+
+	if (!GoalActorClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SpawnGameplayActors: GoalActorClass is null"));
+		return;
+	}
+
+	(void)Grid;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	{
+		int32 gr = Height / 2;
+		int32 gc = Width / 2;
+		const FVector Pos = CellCenter(gr, gc, CellSize, 0.f);
+		World->SpawnActor<AActor>(GoalActorClass, Pos, FRotator::ZeroRotator, SpawnParams);
+		UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Goal spawned at %s"), *Pos.ToString());
+	}
+
 	TArray<TPair<int32, int32>> PlayerStartNodes{{0, 0}, {0, Width - 1}, {Height - 1, 0}, {Height - 1, Width - 1}};
-	
-    // ---- 3) MazeTargetPoint 스폰 ----
-    for (int32 i = 0; i < PlayerNum; ++i)
-    {
-    	auto [pr, pc] = PlayerStartNodes[i];
+	for (int32 i = 0; i < PlayerNum; ++i)
+	{
+		auto [pr, pc] = PlayerStartNodes[i];
+		const FVector Pos = CellCenter(pr, pc, CellSize, 0.f);
+		AMazeTargetPoint* TP = World->SpawnActor<AMazeTargetPoint>(AMazeTargetPoint::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
+		if (TP)
+		{
+			TP->PlayerIndex = i;
+		}
+		UE_LOG(LogTemp, Log, TEXT("MazeGenerator: MazeTargetPoint[%d] spawned at %s"), i, *Pos.ToString());
+	}
 
-        const FVector Pos = CellCenter(pr, pc, CellSize, 0.f);
-        AMazeTargetPoint* TP = World->SpawnActor<AMazeTargetPoint>(AMazeTargetPoint::StaticClass(), Pos, FRotator::ZeroRotator, SpawnParams);
-        if (TP)
-        {
-            TP->PlayerIndex = i;
-        }
-        UE_LOG(LogTemp, Log, TEXT("MazeGenerator: MazeTargetPoint[%d] spawned at %s"), i, *Pos.ToString());
-    }
-	
-	// ---- 4) Bot 스폰 ----
 	if (BotClass && BotCount > 0)
 	{
-		// 4개 코너 근처 스폰 좌표 (미로 크기에 비례)
 		TArray<TPair<int32, int32>> BotStartNodes = {
 			{Height / 4,              Width / 4},
 			{Height - 1 - Height / 4, Width / 4},
 			{Height / 4,              Width - 1 - Width / 4},
 			{Height - 1 - Height / 4, Width - 1 - Width / 4},
 		};
-	
+
 		const int32 ActualBotCount = FMath::Min(BotCount, BotStartNodes.Num());
 		for (int32 i = 0; i < ActualBotCount; ++i)
 		{
@@ -182,7 +218,7 @@ void UMazeGenerator::GenerateMaze(
 	}
 }
 
-void UMazeGenerator::BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid)
+void UMazeGenerator::BuildMazeGrid(int32 Height, int32 Width, int32 Seed, TArray<FCellRow>& Grid)
 {
 	const int32 NodeNum = Height * Width;
 
@@ -211,7 +247,12 @@ void UMazeGenerator::BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& 
 			Edges.Emplace(u, v);
 		}
 
-	Algo::RandomShuffle(Edges);
+	FRandomStream Rng(Seed);
+	for (int32 i = Edges.Num() - 1; i > 0; --i)
+	{
+		const int32 j = Rng.RandHelper(i + 1);
+		Edges.Swap(i, j);
+	}
 
 	int32 Count = 0;
 	for (auto [u, v] : Edges)

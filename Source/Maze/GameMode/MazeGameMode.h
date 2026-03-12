@@ -34,11 +34,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
 	int32 MazeHeight = 9;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Maze")
-	float CellSize = 500.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Maze")
-	TSubclassOf<AActor> WallClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Maze")
 	TSubclassOf<AActor> GoalActorClass;

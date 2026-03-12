@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "Helper/MazeGenerator.h"
 #include "MazeGameState.generated.h"
 
 class UMazeCountdownWidget;
@@ -27,6 +28,7 @@ public:
 
     void SetPhase(EMazePhase NewPhase);
     void SetWinnerPlayer(APlayerState* NewWinner);
+    void SetMazeData(int32 InSeed, int32 InWidth, int32 InHeight);
 
     UPROPERTY(ReplicatedUsing=OnRep_Phase, BlueprintReadOnly, Category="Maze")
     EMazePhase Phase = EMazePhase::WaitingForPlayers;
@@ -36,6 +38,21 @@ public:
 
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Maze")
     float CountdownEndTime = 0.f;
+
+    UPROPERTY(ReplicatedUsing=OnRep_MazeSeed, BlueprintReadOnly, Category="Maze")
+    int32 MazeSeed = 0;
+
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Maze")
+    int32 MazeWidth = 0;
+
+    UPROPERTY(Replicated, BlueprintReadOnly, Category="Maze")
+    int32 MazeHeight = 0;
+
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Gameplay")
+    TSubclassOf<AActor> WallClass;
+
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Gameplay")
+    float CellSize = 500.f;
 
     UPROPERTY(EditDefaultsOnly, Category="Maze|UI")
     TSubclassOf<UMazeCountdownWidget> CountdownWidgetClass;
@@ -58,6 +75,9 @@ private:
 
     UFUNCTION()
     void OnRep_MatchResult();
+
+    UFUNCTION()
+    void OnRep_MazeSeed();
 
     UPROPERTY()
     TObjectPtr<UMazeCountdownWidget> CountdownWidgetInstance;

@@ -59,9 +59,29 @@ public:
 		TSubclassOf<AActor> GoalActorClass,
 		TSubclassOf<APawn> BotClass = nullptr,
 		int32 BotCount = 4);
+
+	static void BuildMazeGrid(int32 Height, int32 Width, int32 Seed, TArray<FCellRow>& Grid);
+
+	static int32 SpawnWalls(
+		UObject* WorldContextObject,
+		const TArray<FCellRow>& Grid,
+		int32 Height,
+		int32 Width,
+		float CellSize,
+		TSubclassOf<AActor> WallClass);
+
+	static void SpawnGameplayActors(
+		UObject* WorldContextObject,
+		const TArray<FCellRow>& Grid,
+		int32 Height,
+		int32 Width,
+		float CellSize,
+		int32 PlayerNum,
+		TSubclassOf<AActor> GoalActorClass,
+		TSubclassOf<APawn> BotClass,
+		int32 BotCount);
 	
 private:
-	static void BuildMazeGrid(int32 Height, int32 Width, TArray<FCellRow>& Grid);
 	static int32 FindRoot(int32 u, TArray<int32>& UF);
 	static bool UnionSet(int32 u, int32 v, TArray<int32>& UF);
 	
