@@ -90,11 +90,19 @@ int32 UMazeGenerator::SpawnWalls(
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.bCreateActorPackage = false;
+	SpawnParams.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull;
 
+	static const FName WallBaseName(TEXT("MazeWall"));
 	int32 SpawnedWallCount = 0;
 	auto SpawnWall = [&](const FVector& Pos, const FRotator& Rot)
 	{
-		World->SpawnActor<AActor>(WallClass, Pos, Rot, SpawnParams);
+		SpawnParams.Name = FName(WallBaseName, SpawnedWallCount);
+		AActor* Wall = World->SpawnActor<AActor>(WallClass, Pos, Rot, SpawnParams);
+		if (!Wall)
+		{
+			UE_LOG(LogTemp, Error, TEXT("SpawnWalls: Failed to spawn wall %d (name collision?)"), SpawnedWallCount);
+		}
 		++SpawnedWallCount;
 	};
 

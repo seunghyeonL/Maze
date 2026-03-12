@@ -36,16 +36,6 @@ void AMazeGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: InitGame MazeSize=%d (Width=%d, Height=%d)"), Size, MazeWidth, MazeHeight);
 
-	// WallClass 에셋 프리로드: CDO 강제 구축 → 패키지 레지스트리 프라이밍
-	// SpawnWalls 시 DoesPackageExist 디스크 I/O를 메모리 캐시로 대체 (87ms 절감 목표)
-	if (AMazeGameState* GS = GetGameState<AMazeGameState>())
-	{
-		if (GS->WallClass)
-		{
-			GS->WallClass->GetDefaultObject(/*bCreateIfNeeded=*/true);
-			UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Preloaded WallClass CDO: %s"), *GS->WallClass->GetName());
-		}
-	}
 }
 
 void AMazeGameMode::PostLogin(APlayerController* NewPlayer)
