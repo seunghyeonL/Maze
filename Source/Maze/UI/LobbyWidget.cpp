@@ -469,5 +469,10 @@ void ULobbyWidget::ShowAlert(const FText& Title, const FText& Message)
 void ULobbyWidget::HandleGameStarted()
 {
 	if (IsLobbyHost()) return;  // 호스트는 HandleGameStartClicked에서 직접 처리
+	
+	// Loading Widget Refresh 막기
+	if (UWorld* World = GetWorld())
+		World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+	
 	ShowLoading(FText::FromString(TEXT("게임 시작 중...")));
 }
