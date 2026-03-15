@@ -50,9 +50,13 @@ void AMazeLobbyGameState::AddPlayerState(APlayerState* PlayerState)
 	Super::AddPlayerState(PlayerState);
 
 	// PlayerName 등 프로퍼티가 리플리케이트될 시간을 확보한 뒤 Broadcast
-	GetWorldTimerManager().SetTimer(PlayerListChangedTimerHandle, [this]()
+	TWeakObjectPtr<AMazeLobbyGameState> WeakThis(this);
+	GetWorldTimerManager().SetTimer(PlayerListChangedTimerHandle, [WeakThis]()
 	{
-		OnPlayerListChanged.Broadcast();
+		if (WeakThis.IsValid())
+		{
+			WeakThis->OnPlayerListChanged.Broadcast();
+		}
 	}, 0.2f, false);
 }
 
