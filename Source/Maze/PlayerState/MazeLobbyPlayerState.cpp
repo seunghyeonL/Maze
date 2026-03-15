@@ -36,6 +36,12 @@ void AMazeLobbyPlayerState::OnRep_IsReady()
 	OnReadyChanged.Broadcast(this, bIsReady);
 }
 
+void AMazeLobbyPlayerState::OnRep_PlayerName()
+{
+	Super::OnRep_PlayerName();
+	OnReadyChanged.Broadcast(this, bIsReady);
+}
+
 void AMazeLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

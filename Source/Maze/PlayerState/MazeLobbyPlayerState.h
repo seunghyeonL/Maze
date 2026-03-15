@@ -35,5 +35,7 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetReady(bool bNewReady);
 	
+	virtual void OnRep_PlayerName() override;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
