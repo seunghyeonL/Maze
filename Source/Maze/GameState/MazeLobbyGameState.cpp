@@ -1,5 +1,6 @@
 ﻿#include "MazeLobbyGameState.h"
 #include "Net/UnrealNetwork.h"
+#include "TimerManager.h"
 
 static bool IsValidMazeSize(int32 Size)
 {
@@ -47,7 +48,12 @@ void AMazeLobbyGameState::SetGameStarted(bool bStarted)
 void AMazeLobbyGameState::AddPlayerState(APlayerState* PlayerState)
 {
 	Super::AddPlayerState(PlayerState);
-	OnPlayerListChanged.Broadcast();
+
+	// PlayerName 등 프로퍼티가 리플리케이트될 시간을 확보한 뒤 Broadcast
+	GetWorldTimerManager().SetTimer(PlayerListChangedTimerHandle, [this]()
+	{
+		OnPlayerListChanged.Broadcast();
+	}, 0.2f, false);
 }
 
 void AMazeLobbyGameState::RemovePlayerState(APlayerState* PlayerState)

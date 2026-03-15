@@ -48,5 +48,7 @@ protected:
 	UFUNCTION()
 	void OnRep_bGameStarted();
 
+	FTimerHandle PlayerListChangedTimerHandle;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
