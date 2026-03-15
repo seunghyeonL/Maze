@@ -61,7 +61,7 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 	Settings.bIsLANMatch = bLAN;
 	Settings.NumPublicConnections = FMath::Max(2, MaxPlayers);
 	Settings.bShouldAdvertise = true;
-	Settings.bAllowJoinInProgress = false;
+	Settings.bAllowJoinInProgress = true;
 
 	// LAN(Null OSS) → Presence/Lobby OFF, Steam → Presence/Lobby ON
 	Settings.bUsesPresence = !bLAN;
