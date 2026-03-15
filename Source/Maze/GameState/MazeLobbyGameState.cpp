@@ -43,3 +43,15 @@ void AMazeLobbyGameState::SetGameStarted(bool bStarted)
 		OnRep_bGameStarted();
 	}
 }
+
+void AMazeLobbyGameState::AddPlayerState(APlayerState* PlayerState)
+{
+	Super::AddPlayerState(PlayerState);
+	OnPlayerListChanged.Broadcast();
+}
+
+void AMazeLobbyGameState::RemovePlayerState(APlayerState* PlayerState)
+{
+	Super::RemovePlayerState(PlayerState);
+	OnPlayerListChanged.Broadcast();
+}

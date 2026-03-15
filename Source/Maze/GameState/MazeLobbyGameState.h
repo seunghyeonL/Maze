@@ -6,6 +6,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyMazeSizeChanged, int32, NewMazeSize);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLobbyGameStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerListChanged);
 
 UCLASS()
 class MAZE_API AMazeLobbyGameState : public AGameState
@@ -22,11 +23,17 @@ public:
 	void SetSelectedMazeSize(int32 NewSize);
 	void SetGameStarted(bool bStarted);
 
+	virtual void AddPlayerState(APlayerState* PlayerState) override;
+	virtual void RemovePlayerState(APlayerState* PlayerState) override;
+
 	UPROPERTY(BlueprintAssignable, Category="Lobby")
 	FOnLobbyMazeSizeChanged OnMazeSizeChanged;
 
 	UPROPERTY(BlueprintAssignable, Category="Lobby")
 	FOnLobbyGameStarted OnGameStarted;
+
+	UPROPERTY(BlueprintAssignable, Category="Lobby")
+	FOnPlayerListChanged OnPlayerListChanged;
 
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_SelectedMazeSize, BlueprintReadOnly, Category="Lobby")
