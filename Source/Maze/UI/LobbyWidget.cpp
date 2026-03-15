@@ -84,11 +84,6 @@ void ULobbyWidget::NativeConstruct()
 
 	RefreshPlayerList();
 
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().SetTimer(RefreshTimerHandle, this, &ULobbyWidget::RefreshPlayerList, 1.0f, true);
-	}
-
 	SetKeyboardFocus();
 }
 
@@ -116,7 +111,6 @@ void ULobbyWidget::NativeDestruct()
 
 	if (UWorld* World = GetWorld())
 	{
-		World->GetTimerManager().ClearTimer(RefreshTimerHandle);
 		World->GetTimerManager().ClearTimer(GameStartTimerHandle);
 	}
 
@@ -232,8 +226,8 @@ void ULobbyWidget::HandleGameStartClicked()
 	// 1. 더블클릭 방지
 	if (GameStartButton) GameStartButton->SetIsEnabled(false);
 
-	// 2. RefreshTimer 중지 (ShowLoading auto-hide 방지)
-	World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+	// 2. PlayerListChanged 구독 해제 (ShowLoading auto-hide 방지)
+	if (BoundGameState.IsValid()) BoundGameState->OnPlayerListChanged.RemoveDynamic(this, &ULobbyWidget::HandlePlayerListChanged);
 
 	// 3. 호스트 즉시 LoadingOverlay 표시
 	ShowLoading(FText::FromString(TEXT("게임 시작 중...")));
@@ -315,6 +309,11 @@ void ULobbyWidget::HandleReadyChanged(AMazeLobbyPlayerState* PlayerState, bool b
 	RefreshPlayerList();
 }
 
+void ULobbyWidget::HandlePlayerListChanged()
+{
+	RefreshPlayerList();
+}
+
 void ULobbyWidget::RefreshPlayerList()
 {
 	if (!PlayerList)
@@ -391,6 +390,7 @@ void ULobbyWidget::BindGameStateMazeSize()
 	UnbindGameState();
 	LobbyGameState->OnMazeSizeChanged.AddDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
 	LobbyGameState->OnGameStarted.AddDynamic(this, &ULobbyWidget::HandleGameStarted);
+	LobbyGameState->OnPlayerListChanged.AddDynamic(this, &ULobbyWidget::HandlePlayerListChanged);
 	BoundGameState = LobbyGameState;
 }
 
@@ -400,6 +400,7 @@ void ULobbyWidget::UnbindGameState()
 	{
 		BoundGameState->OnMazeSizeChanged.RemoveDynamic(this, &ULobbyWidget::HandleMazeSizeChanged);
 		BoundGameState->OnGameStarted.RemoveDynamic(this, &ULobbyWidget::HandleGameStarted);
+		BoundGameState->OnPlayerListChanged.RemoveDynamic(this, &ULobbyWidget::HandlePlayerListChanged);
 	}
 	BoundGameState.Reset();
 }
@@ -470,9 +471,8 @@ void ULobbyWidget::HandleGameStarted()
 {
 	if (IsLobbyHost()) return;  // 호스트는 HandleGameStartClicked에서 직접 처리
 	
-	// Loading Widget Refresh 막기
-	if (UWorld* World = GetWorld())
-		World->GetTimerManager().ClearTimer(RefreshTimerHandle);
+	// PlayerListChanged 구독 해제 (ShowLoading auto-hide 방지)
+	if (BoundGameState.IsValid()) BoundGameState->OnPlayerListChanged.RemoveDynamic(this, &ULobbyWidget::HandlePlayerListChanged);
 	
 	ShowLoading(FText::FromString(TEXT("게임 시작 중...")));
 }

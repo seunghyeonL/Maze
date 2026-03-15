@@ -79,6 +79,9 @@ protected:
 	UFUNCTION()
 	void HandleMazeSizeChanged(int32 NewMazeSize);
 
+	UFUNCTION()
+	void HandlePlayerListChanged();
+
 private:
 	void CacheSubsystems();
 	void UpdateRoleVisibility();
@@ -93,7 +96,6 @@ private:
 	UFUNCTION()
 	void ShowAlert(const FText& Title, const FText& Message);
 
-	FTimerHandle RefreshTimerHandle;
 	FTimerHandle GameStartTimerHandle;
 
 	UPROPERTY()
