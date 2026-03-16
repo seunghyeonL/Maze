@@ -32,6 +32,11 @@ void UMazeGameInstance::Shutdown()
 
 void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
+	UE_LOG(LogTemp, Warning, TEXT("MazeGI: OnNetworkFailure - Type: %d, NetDriver: %s, Error: %s"),
+		static_cast<int32>(FailureType),
+		NetDriver ? *NetDriver->GetName() : TEXT("nullptr"),
+		*ErrorString);
+
 	// Guard against recursive error handling
 	if (bHandlingFailure)
 	{
@@ -48,8 +53,8 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 		false
 	);
 
-	// Filter out host-side failures (only handle client-side)
-	if (NetDriver && NetDriver->GetNetMode() != NM_Client)
+	// 클라이언트 측 실패만 처리 (NetDriver 없거나 호스트/Standalone이면 무시)
+	if (!NetDriver || NetDriver->GetNetMode() != NM_Client)
 	{
 		return;
 	}
