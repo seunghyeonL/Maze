@@ -53,8 +53,8 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 		false
 	);
 
-	// 클라이언트 측 실패만 처리 (NetDriver 없거나 호스트/Standalone이면 무시)
-	if (!NetDriver || NetDriver->GetNetMode() != NM_Client)
+	// 클라이언트 측 실패만 처리 (World 기준 — Standalone/Host/Travel 중 무시)
+	if (!World || World->GetNetMode() != NM_Client)
 	{
 		return;
 	}
