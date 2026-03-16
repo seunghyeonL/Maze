@@ -5,15 +5,12 @@
 #include "../UI/TitleWidget.h"
 #include "../UI/UIFlowSubsystem.h"
 
-#include "OnlineSubsystem/SOSManager.h"
-
 #include "UI/AudioSettingsWidget.h"
 #include "Settings/MazeUserSettings.h"
 #include "AudioDevice.h"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
 #include "Blueprint/UserWidget.h"
-#include "Engine/Engine.h"
 
 void ATitlePlayerController::BeginPlay()
 {
@@ -22,12 +19,6 @@ void ATitlePlayerController::BeginPlay()
 	if (!IsLocalController())
 	{
 		return;
-	}
-
-	if (GEngine)
-	{
-		GEngine->OnNetworkFailure().RemoveAll(this);
-		GEngine->OnNetworkFailure().AddUObject(this, &ATitlePlayerController::HandleNetworkFailure);
 	}
 
 	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
@@ -46,11 +37,6 @@ void ATitlePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	// [ServerTravel crash fix] 초기화하지 않았으므로 정리도 불필요
 	// CleanupAudio();
-
-	if (GEngine)
-	{
-		GEngine->OnNetworkFailure().RemoveAll(this);
-	}
 
 	if (UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr)
 	{
@@ -154,60 +140,6 @@ void ATitlePlayerController::SetupGameInput()
 
 void ATitlePlayerController::HandleScreenChanged(EUIFlowScreen NewScreen)
 {
-	RefreshUI();
-}
-
-void ATitlePlayerController::HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
-{
-	(void)World;
-	(void)NetDriver;
-
-	UE_LOG(LogTemp, Warning, TEXT("MazeUI: NetworkFailure - Type: %d, Error: %s"), 
-		static_cast<int32>(FailureType), *ErrorString);
-
-	UUIFlowSubsystem* Flow = GetGameInstance() ? GetGameInstance()->GetSubsystem<UUIFlowSubsystem>() : nullptr;
-	if (Flow)
-	{
-		// PreLogin 거부 메시지나 기타 에러를 pending error로 저장
-		// Hangul Syllables 감지 (U+AC00~U+D7AF): 한국어 PreLogin 거부 메시지 보존
-		bool bHasKorean = false;
-		for (const TCHAR Ch : ErrorString)
-		{
-			if (Ch >= 0xAC00 && Ch <= 0xD7AF)
-			{
-				bHasKorean = true;
-				break;
-			}
-		}
-
-		FText ErrorMessage;
-		if (ErrorString.Contains(TEXT("full")) || ErrorString.Contains(TEXT("Server is full")))
-		{
-			ErrorMessage = FText::FromString(TEXT("방이 가득 찼습니다."));
-		}
-		else if (bHasKorean)
-		{
-			// 한국어 PreLogin 메시지 (예: "게임이 이미 시작됐습니다.") → 그대로 표시
-			ErrorMessage = FText::FromString(ErrorString);
-		}
-		else
-		{
-			// 영문 엔진 메시지 또는 빈 문자열 → 한국어 기본 메시지
-			ErrorMessage = FText::FromString(TEXT("서버와의 연결이 끊어졌습니다."));
-		}
-
-		Flow->SetPendingError(ErrorMessage);
-		ClearActiveWidget();  // MatchWidget 로드 오버레이 stuck 방지: 강제 재생성 보장
-		Flow->SetScreenMatch();
-	}
-
-	// Ensure local OnlineSession state is cleared, otherwise Join/Create can fail with
-	// "Session (GameSession) already exists" after a disconnect.
-	if (USOSManager* SOS = GetGameInstance() ? GetGameInstance()->GetSubsystem<USOSManager>() : nullptr)
-	{
-		SOS->DestroySession();
-	}
-
 	RefreshUI();
 }
 

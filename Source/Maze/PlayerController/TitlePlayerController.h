@@ -60,7 +60,6 @@ private:
 	void ClearActiveWidget();
 	void SetupUIInput(UUserWidget* Widget);
 	void SetupGameInput();
-	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 	UFUNCTION() void HandleScreenChanged(EUIFlowScreen NewScreen);
 
 	void InitializeAudio();
