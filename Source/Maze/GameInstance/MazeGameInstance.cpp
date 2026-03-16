@@ -41,15 +41,12 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 	bHandlingFailure = true;
 
 	// Set up 2-second timeout to reset guard flag
-	if (UWorld* CurrentWorld = GetWorld())
-	{
-		CurrentWorld->GetTimerManager().SetTimer(
-			FailureGuardTimerHandle,
-			[this]() { bHandlingFailure = false; },
-			2.0f,
-			false
-		);
-	}
+	GetTimerManager().SetTimer(
+		FailureGuardTimerHandle,
+		[this]() { bHandlingFailure = false; },
+		2.0f,
+		false
+	);
 
 	// Filter out host-side failures (only handle client-side)
 	if (NetDriver && NetDriver->GetNetMode() != NM_Client)

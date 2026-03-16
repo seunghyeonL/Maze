@@ -19,6 +19,9 @@ public:
 	virtual void Shutdown() override;
 
 private:
+	/** Suppress engine's default double-travel behavior. */
+	virtual void HandleNetworkError(ENetworkFailure::Type FailureType, bool bIsServer) {}
+
 	/** Delegate callback for GEngine->OnNetworkFailure().
 	 *  Receives ErrorString and handles Korean detection + error message logic. */
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
