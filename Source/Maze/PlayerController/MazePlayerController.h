@@ -9,7 +9,6 @@
 class UAudioSettingsWidget;
 class USoundMix;
 class USoundClass;
-class UNetDriver;
 
 UCLASS()
 class MAZE_API AMazePlayerController : public APlayerController
@@ -53,9 +52,6 @@ void InitializeAudio();
 
 	/** 레벨 종료 시 오디오 정리 */
 	void CleanupAudio();
-
-	/** 네트워크 연결 끊김 시 TitleLevel로 안전 복귀 */
-	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	/** ExitToTitle 버튼 확인 후 TitleLevel로 복귀 */
 	void HandleExitToTitle();
