@@ -51,9 +51,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="SOS|Session")
 	void DestroySession();
 
-	// 마지막 검색 결과를 UI가 필요할 때 다시 가져가고 싶으면
-	UFUNCTION(BlueprintPure, Category="SOS|Session")
-	const TArray<FFoundSessionInfo>& GetLastFoundSessions() const { return LastFoundSessions; }
 
 private:
 	IOnlineSessionPtr GetSessionInterface() const;
@@ -76,7 +73,6 @@ private:
 
 	UPROPERTY() FString PendingSessionMap;
 	UPROPERTY() TArray<FFoundSessionInfo> LastFoundSessions;
-	UPROPERTY() bool bHosting = false;
 
 	// If a stale GameSession exists (common after disconnect), we destroy first then retry.
 	UPROPERTY() bool bPendingCreateAfterDestroy = false;

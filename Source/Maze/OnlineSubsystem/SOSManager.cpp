@@ -77,8 +77,6 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 
 	// 로컬 유저 인덱스 0 기준 (일반적인 싱글 로컬 플레이 기준)
 	const int32 LocalUserNum = 0;
-	bHosting = true;
-
 	const bool bStarted = Sessions->CreateSession(LocalUserNum, GAME_SESSION_NAME, Settings);
 	if (!bStarted)
 	{
@@ -302,7 +300,6 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
 	}
 
-	bHosting = false;
 	OnSessionDestroyed.Broadcast(bWasSuccessful);
 
 	if (!bWasSuccessful)
