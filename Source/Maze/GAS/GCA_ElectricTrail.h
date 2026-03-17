@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayCueNotify_Actor.h"
-#include "GCNA_ElectricTrail.generated.h"
+#include "GCA_ElectricTrail.generated.h"
 
 /**
  * 
@@ -14,7 +14,7 @@ class UNiagaraSystem;
 class UNiagaraComponent;
 
 UCLASS()
-class MAZE_API AGCNA_ElectricTrail : public AGameplayCueNotify_Actor
+class MAZE_API AGCA_ElectricTrail : public AGameplayCueNotify_Actor
 {
 	GENERATED_BODY()
 	

@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "GCNA_ElectricTrail.h"
+#include "GCA_ElectricTrail.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Actor.h"
 
-bool AGCNA_ElectricTrail::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
+bool AGCA_ElectricTrail::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Trail Cue Active"));
 	if (!MyTarget || !TrailSystem)
@@ -38,7 +38,7 @@ bool AGCNA_ElectricTrail::OnActive_Implementation(AActor* MyTarget, const FGamep
 	return SpawnedComp != nullptr;
 }
 
-bool AGCNA_ElectricTrail::OnRemove_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
+bool AGCA_ElectricTrail::OnRemove_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
 	if (SpawnedComp && IsValid(SpawnedComp))
 	{
