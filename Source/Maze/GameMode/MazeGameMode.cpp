@@ -3,22 +3,19 @@
 #include "MazeGameMode.h"
 #include "PlayerController/MazePlayerController.h"
 #include "GameState/MazeGameState.h"
+#include "GameSession/MazeGameSession.h"
 #include "../Actor/MazeTargetPoint.h"
 #include "Helper/MazeGenerator.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "EngineUtils.h"
-#include "OnlineSubsystem.h"
-#include "OnlineSubsystemUtils.h"
-#include "Online/OnlineSessionNames.h"
-#include "OnlineSessionSettings.h"
-#include "Interfaces/OnlineSessionInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Settings/MazeLevelSettings.h"
 
 AMazeGameMode::AMazeGameMode()
 {
 	PlayerControllerClass = AMazePlayerController::StaticClass();
+	GameSessionClass = AMazeGameSession::StaticClass();
 	bDelayedStart = false;
 	GameStateClass = AMazeGameState::StaticClass();
 }
@@ -98,7 +95,12 @@ void AMazeGameMode::TryStartGameFlow()
 {
 	if (bGameFlowStarted || bMatchEnded) return;
 
-	const int32 ExpectedCount = GetExpectedPlayerCount();
+	int32 ExpectedCount = MinExpectedPlayers;
+	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GameSession))
+	{
+		ExpectedCount = MazeSession->GetExpectedPlayerCount();
+	}
+	
 	if (ArrivedPlayers.Num() < ExpectedCount)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Waiting for players (%d/%d)"),
@@ -176,6 +178,18 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 		GS2->ForceNetUpdate();
 	}
 	
+	// 게임 시작 알림
+	if (GameSession)
+	{
+		GameSession->HandleMatchHasStarted();
+	}
+	
+	// SetMatchStarted 호출
+	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GameSession))
+	{
+		MazeSession->SetMatchStarted(true);
+	}
+	
 	// 카운트다운 타이머
 	GetWorldTimerManager().SetTimer(
 		CountdownTimerHandle,
@@ -214,20 +228,6 @@ void AMazeGameMode::TeleportPlayers()
 	}
 }
 
-void AMazeGameMode::PreLogin(const FString& Options, const FString& Address,
-	const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
-{
-	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
-
-	if (!ErrorMessage.IsEmpty()) return;
-
-	if (bGameFlowStarted)
-	{
-		ErrorMessage = TEXT("게임이 이미 시작됐습니다.");
-		UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: PreLogin rejected (game already started)"));
-	}
-}
-
 void AMazeGameMode::OnGoalReached(APlayerController* Winner)
 {
 	if (bMatchEnded) return;
@@ -241,6 +241,12 @@ void AMazeGameMode::OnGoalReached(APlayerController* Winner)
 		GS->SetWinnerPlayer(Winner ? Winner->PlayerState : nullptr);
 		GS->SetPhase(EMazePhase::GameOver);
 		GS->ForceNetUpdate();
+	}
+
+	// 게임 종료 알림
+	if (GameSession)
+	{
+		GameSession->HandleMatchHasEnded();
 	}
 
 	GetWorldTimerManager().SetTimer(
@@ -271,27 +277,4 @@ void AMazeGameMode::OnArrivalTimeout()
 	}
 }
 
-int32 AMazeGameMode::GetExpectedPlayerCount() const
-{
-	if (const UWorld* World = GetWorld())
-	{
-		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
-		if (Sessions.IsValid())
-		{
-			if (const FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
-			{
-				// GameStart 시점에 저장한 실제 인원수 우선 사용
-				int32 Expected = 0;
-				if (NamedSession->SessionSettings.Get(FName(TEXT("ExpectedPlayers")), Expected) && Expected > 0)
-				{
-					UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GetExpectedPlayerCount from ExpectedPlayers = %d"), Expected);
-					return Expected;
-				}
-			}
-		}
-	}
-	
-	const int32 Fallback = MinExpectedPlayers;
-	UE_LOG(LogTemp, Warning, TEXT("MazeGameMode: No session, fallback ExpectedCount=%d"), Fallback);
-	return Fallback;
-}
+

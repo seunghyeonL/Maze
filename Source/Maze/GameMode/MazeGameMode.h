@@ -8,6 +8,7 @@
 
 class AMazeGameState;
 class AMazeTargetPoint;
+class AMazeGameSession;
 
 UCLASS()
 class MAZE_API AMazeGameMode : public AGameMode
@@ -23,8 +24,6 @@ public:
 protected:
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-	virtual void PreLogin(const FString& Options, const FString& Address,
-		const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	virtual void Logout(AController* Exiting) override;
 
 	// ---- Maze Configuration ----
@@ -62,7 +61,6 @@ private:
 	void TeleportPlayers();
 	void OnArrivalTimeout();
 	void ReturnToLobby();
-	int32 GetExpectedPlayerCount() const;
 
 	UPROPERTY()
 	TArray<TObjectPtr<AController>> ArrivedPlayers;
