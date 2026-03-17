@@ -6,6 +6,7 @@
 #include "CommonModalWidget.h"
 #include "OnlineSubsystem/SOSManager.h"
 #include "Settings/MazeLevelSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 #include "Components/Button.h"
 #include "Components/ListView.h"
@@ -279,9 +280,9 @@ void UMatchWidget::HandleSessionsFound(bool bSuccess, const TArray<FFoundSession
 	}
 }
 
-void UMatchWidget::HandleSessionJoined(bool bSuccess)
+void UMatchWidget::HandleSessionJoined(bool bSuccess, int32 ResultCode)
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session joined %s"), bSuccess ? TEXT("Success") : TEXT("Failure"));
+	UE_LOG(LogTemp, Log, TEXT("MazeUI: Session joined %s (code=%d)"), bSuccess ? TEXT("Success") : TEXT("Failure"), ResultCode);
 
 	if (bSuccess && UIFlowSubsystem)
 	{
@@ -294,10 +295,20 @@ void UMatchWidget::HandleSessionJoined(bool bSuccess)
 	else if (!bSuccess)
 	{
 		HideLoading();
-		ShowAlert(
-			FText::FromString(TEXT("오류")),
-			FText::FromString(TEXT("로비 참가에 실패했습니다."))
-		);
+		FText ErrorMessage;
+		if (ResultCode == static_cast<int32>(EOnJoinSessionCompleteResult::SessionIsFull))
+		{
+			ErrorMessage = FText::FromString(TEXT("방이 가득 찼습니다."));
+		}
+		else if (ResultCode == static_cast<int32>(EOnJoinSessionCompleteResult::SessionDoesNotExist))
+		{
+			ErrorMessage = FText::FromString(TEXT("세션을 찾을 수 없습니다."));
+		}
+		else
+		{
+			ErrorMessage = FText::FromString(TEXT("로비 참가에 실패했습니다."));
+		}
+		ShowAlert(FText::FromString(TEXT("오류")), ErrorMessage);
 	}
 }
 

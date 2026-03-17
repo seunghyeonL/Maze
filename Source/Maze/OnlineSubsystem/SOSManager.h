@@ -34,7 +34,7 @@ struct FFoundSessionInfo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionCreatedBP, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionDestroyedBP, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionsFoundBP, bool, bSuccess, const TArray<FFoundSessionInfo>&, Results);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSessionJoinedBP, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSessionJoinedBP, bool, bSuccess, int32, ResultCode);
 
 UCLASS()
 class MAZE_API USOSManager : public UGameInstanceSubsystem

@@ -71,7 +71,7 @@ protected:
 	void HandleSessionsFound(bool bSuccess, const TArray<FFoundSessionInfo>& Results);
 
 	UFUNCTION()
-	void HandleSessionJoined(bool bSuccess);
+	void HandleSessionJoined(bool bSuccess, int32 ResultCode);
 
 private:
 	void CacheSubsystems();

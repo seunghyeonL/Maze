@@ -208,7 +208,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 {
 	if (State != ESOSState::Idle)
 	{
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 		return;
 	}
 	State = ESOSState::Joining;
@@ -217,7 +217,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 	if (!Sessions.IsValid() || !SessionSearch.IsValid())
 	{
 		State = ESOSState::Idle;
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 		return;
 	}
 
@@ -233,7 +233,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 	if (!SessionSearch->SearchResults.IsValidIndex(ResultIndex))
 	{
 		State = ESOSState::Idle;
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 		return;
 	}
 
@@ -254,7 +254,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
 		JoinHandle.Reset();
 		State = ESOSState::Idle;
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 	}
 }
 
@@ -273,7 +273,7 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 
 	if (!bSuccess || !Sessions.IsValid())
 	{
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(Result));
 		return;
 	}
 
@@ -281,7 +281,7 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	if (!Sessions->GetResolvedConnectString(SessionName, ConnectString))
 	{
 		UE_LOG(LogTemp, Error, TEXT("MazeOSS: GetResolvedConnectString FAILED"));
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::CouldNotRetrieveAddress));
 		return;
 	}
 
@@ -291,12 +291,12 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeOSS: ClientTravel to %s"), *ConnectString);
 		PC->ClientTravel(ConnectString, ETravelType::TRAVEL_Absolute);
-		OnSessionJoined.Broadcast(true);
+		OnSessionJoined.Broadcast(true, static_cast<int32>(EOnJoinSessionCompleteResult::Success));
 	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("MazeOSS: PlayerController not found"));
-		OnSessionJoined.Broadcast(false);
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 	}
 }
 
@@ -370,7 +370,7 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		if (!SessionSearch.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("MazeUI: JoinSession retry failed - no search results"));
-			OnSessionJoined.Broadcast(false);
+			OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 			return;
 		}
 
@@ -387,7 +387,7 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		if (ResolvedIndex == -1)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("MazeUI: JoinSession retry failed - session %s not found in search results"), *SessionId);
-			OnSessionJoined.Broadcast(false);
+			OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 			return;
 		}
 
