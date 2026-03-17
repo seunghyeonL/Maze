@@ -8,6 +8,7 @@
 #include "CommonModalWidget.h"
 #include "Settings/MazeLevelSettings.h"
 #include "GameState/MazeLobbyGameState.h"
+#include "GameSession/MazeGameSession.h"
 
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
@@ -236,7 +237,10 @@ void ULobbyWidget::HandleGameStartClicked()
 	if (LobbyGameState) LobbyGameState->SetGameStarted(true);
 
 	// 5. 세션 설정
-	if (SOSManager) SOSManager->SetExpectedPlayers(GameState->PlayerArray.Num());
+	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GetWorld()->GetAuthGameMode()->GameSession))
+	{
+		MazeSession->SetExpectedPlayers(GameState->PlayerArray.Num());
+	}
 
 	// 6. MazeSize를 GameState에서 읽기
 	const FString SelectedSize = LobbyGameState
