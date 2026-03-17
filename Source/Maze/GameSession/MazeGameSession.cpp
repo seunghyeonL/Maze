@@ -18,8 +18,8 @@ void AMazeGameSession::InitOptions(const FString& Options)
 		{
 			if (const FNamedOnlineSession* Named = Sessions->GetNamedSession(NAME_GameSession))
 			{
-				MaxPlayers = Named->SessionSettings.NumPublicConnections + 1;
-				UE_LOG(LogTemp, Log, TEXT("MazeGameSession: InitOptions - MaxPlayers=%d (NumPublicConnections=%d +1 for host)"),
+				MaxPlayers = Named->SessionSettings.NumPublicConnections;
+				UE_LOG(LogTemp, Log, TEXT("MazeGameSession: InitOptions - MaxPlayers=%d (NumPublicConnections=%d)"),
 					MaxPlayers, Named->SessionSettings.NumPublicConnections);
 			}
 		}
