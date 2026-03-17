@@ -34,36 +34,32 @@ void UMazeGameInstance::Shutdown()
 
 void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
-	UE_LOG(LogTemp, Warning, TEXT("MazeGI: OnNetworkFailure - Type: %d, NetDriver: %s, Error: %s"),
-		static_cast<int32>(FailureType),
-		NetDriver ? *NetDriver->GetName() : TEXT("nullptr"),
-		*ErrorString);
+	// [진단 로그] 패키징/스팀 테스트 시 주석 해제
+	// UE_LOG(LogTemp, Warning, TEXT("MazeGI: OnNetworkFailure - Type: %d, NetDriver: %s, Error: %s"),
+	// 	static_cast<int32>(FailureType),
+	// 	NetDriver ? *NetDriver->GetName() : TEXT("nullptr"),
+	// 	*ErrorString);
 
-	// Guard against recursive error handling
-	if (bHandlingFailure)
-	{
-		return;
-	}
+	// === 필터 (처리 대상이 아니면 early return) ===
 
-	bHandlingFailure = true;
-
-	// Set up 2-second timeout to reset guard flag
-	GetTimerManager().SetTimer(
-		FailureGuardTimerHandle,
-		[this]() { bHandlingFailure = false; },
-		2.0f,
-		false
-	);
-
-	// 호스트/서버는 무시 (자체 퇴장 로직으로 처리)
+	// 델리게이트 파라미터 World가 nullptr이면 GameInstance에서 찾기
 	if (!World)
 	{
+		World = GetWorld();
+	}
+	if (!World)
+	{
+		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - no World"));
 		return;
 	}
 
 	const ENetMode NetMode = World->GetNetMode();
+	// UE_LOG(LogTemp, Warning, TEXT("MazeGI: NetMode=%d (0=Standalone,1=DedicatedServer,2=ListenServer,3=Client)"), static_cast<int32>(NetMode));
+
+	// 호스트/서버는 무시 (자체 퇴장 로직으로 처리)
 	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
 	{
+		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - host/server"));
 		return;
 	}
 
@@ -74,9 +70,27 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
 		if (!Sessions.IsValid() || !Sessions->GetNamedSession(NAME_GameSession))
 		{
+			// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - standalone no session"));
 			return;
 		}
 	}
+
+	// === 가드 (필터 통과 후, 실제 처리 전에만 설정) ===
+
+	if (bHandlingFailure)
+	{
+		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - bHandlingFailure guard"));
+		return;
+	}
+
+	bHandlingFailure = true;
+
+	GetTimerManager().SetTimer(
+		FailureGuardTimerHandle,
+		[this]() { bHandlingFailure = false; },
+		2.0f,
+		false
+	);
 
 	// Determine error message with Korean detection
 	bool bHasKorean = false;
