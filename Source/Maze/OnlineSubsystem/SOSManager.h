@@ -61,6 +61,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="SOS|Session")
 	void DestroySession();
 
+	UFUNCTION(BlueprintCallable, Category="SOS|Session")
+	void ForceReset();
 
 private:
 	IOnlineSessionPtr GetSessionInterface() const;

@@ -396,3 +396,32 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		return;
 	}
 }
+
+void USOSManager::ForceReset()
+{
+	IOnlineSessionPtr Sessions = GetSessionInterface();
+	if (Sessions.IsValid())
+	{
+		if (CreateHandle.IsValid()) Sessions->ClearOnCreateSessionCompleteDelegate_Handle(CreateHandle);
+		if (FindHandle.IsValid())   Sessions->ClearOnFindSessionsCompleteDelegate_Handle(FindHandle);
+		if (JoinHandle.IsValid())   Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
+		if (DestroyHandle.IsValid()) Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
+	}
+
+	CreateHandle.Reset();
+	FindHandle.Reset();
+	JoinHandle.Reset();
+	DestroyHandle.Reset();
+
+	State = ESOSState::Idle;
+
+	bPendingCreateAfterDestroy = false;
+	bPendingJoinAfterDestroy = false;
+	PendingJoinSessionId.Reset();
+	PendingCreateMaxPlayers = 0;
+	bPendingCreateLAN = false;
+
+	SessionSearch.Reset();
+	LastFoundSessions.Reset();
+	PendingSessionMap.Reset();
+}

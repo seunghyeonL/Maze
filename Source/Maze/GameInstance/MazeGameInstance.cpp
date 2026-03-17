@@ -125,9 +125,11 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 		UIFlow->SetScreenMatch();
 	}
 
-	// Clear session state
+	// Clear session state — ForceReset clears in-flight handles/state,
+	// then DestroySession handles the actual online session cleanup.
 	if (USOSManager* SOS = GetSubsystem<USOSManager>())
 	{
+		SOS->ForceReset();
 		SOS->DestroySession();
 	}
 
