@@ -6,6 +6,8 @@
 #include "TimerManager.h"
 #include "UI/UIFlowSubsystem.h"
 #include "OnlineSubsystem/SOSManager.h"
+#include "OnlineSubsystemUtils.h"
+#include "Online/OnlineSessionNames.h"
 #include "Settings/MazeLevelSettings.h"
 
 void UMazeGameInstance::Init()
@@ -53,10 +55,27 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 		false
 	);
 
-	// 클라이언트 측 실패만 처리 (World 기준 — Standalone/Host/Travel 중 무시)
-	if (!World || World->GetNetMode() != NM_Client)
+	// 호스트/서버는 무시 (자체 퇴장 로직으로 처리)
+	if (!World)
 	{
 		return;
+	}
+
+	const ENetMode NetMode = World->GetNetMode();
+	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
+	{
+		return;
+	}
+
+	// Standalone: 활성 세션이 있을 때만 처리 (JoinSession 후 거부된 경우)
+	// 세션 없으면 시작 시 PendingNetDriver 노이즈이므로 무시
+	if (NetMode == NM_Standalone)
+	{
+		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
+		if (!Sessions.IsValid() || !Sessions->GetNamedSession(NAME_GameSession))
+		{
+			return;
+		}
 	}
 
 	// Determine error message with Korean detection
