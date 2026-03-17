@@ -34,6 +34,8 @@ public:
 	 * 
 	 * @return 빈 문자열 = 승인, 비어있지 않은 문자열 = 거부 사유
 	 */
+	virtual void InitOptions(const FString& Options) override;
+
 	virtual FString ApproveLogin(const FString& Options) override;
 
 	/**

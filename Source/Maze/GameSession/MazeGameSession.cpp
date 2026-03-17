@@ -6,6 +6,25 @@
 #include "Online/OnlineSessionNames.h"
 #include "Kismet/GameplayStatics.h"
 
+void AMazeGameSession::InitOptions(const FString& Options)
+{
+	Super::InitOptions(Options);
+
+	// OnlineSession의 NumPublicConnections로 MaxPlayers 동기화
+	if (UWorld* World = GetWorld())
+	{
+		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
+		if (Sessions.IsValid())
+		{
+			if (const FNamedOnlineSession* Named = Sessions->GetNamedSession(NAME_GameSession))
+			{
+				MaxPlayers = Named->SessionSettings.NumPublicConnections;
+				UE_LOG(LogTemp, Log, TEXT("MazeGameSession: InitOptions - MaxPlayers synced to %d from NumPublicConnections"), MaxPlayers);
+			}
+		}
+	}
+}
+
 FString AMazeGameSession::ApproveLogin(const FString& Options)
 {
 	// 1. 부모 클래스 검증 (기본 에러 체크)
