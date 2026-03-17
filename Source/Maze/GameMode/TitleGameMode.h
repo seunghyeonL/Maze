@@ -6,6 +6,8 @@
 #include "GameFramework/GameMode.h"
 #include "TitleGameMode.generated.h"
 
+class AMazeGameSession;
+
 /**
  * 
  */
@@ -20,11 +22,5 @@ class MAZE_API ATitleGameMode : public AGameMode
 public:
 	ATitleGameMode();
 	
-	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
-	virtual void PostLogin(APlayerController* NewPlayer) override;
-	
 	virtual void NotifyPendingConnectionLost(const FUniqueNetIdRepl& ConnectionUniqueId) override;
-	
-private:
-	int32 PendingJoinCount = 0;
 };
