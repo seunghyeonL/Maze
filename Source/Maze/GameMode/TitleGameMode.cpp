@@ -10,9 +10,3 @@ ATitleGameMode::ATitleGameMode()
 	GameSessionClass = AMazeGameSession::StaticClass();
 }
 
-void ATitleGameMode::NotifyPendingConnectionLost(const FUniqueNetIdRepl& ConnectionUniqueId)
-{
-	if (AMazeGameSession* Session = Cast<AMazeGameSession>(GameSession))
-		Session->DecPendingJoin();
-}
-

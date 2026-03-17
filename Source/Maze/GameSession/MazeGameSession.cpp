@@ -4,13 +4,13 @@
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
-#include "Kismet/GameplayStatics.h"
 
 void AMazeGameSession::InitOptions(const FString& Options)
 {
 	Super::InitOptions(Options);
 
-	// OnlineSession의 NumPublicConnections로 MaxPlayers 동기화
+	// OnlineSession의 NumPublicConnections → MaxPlayers 동기화
+	// Listen Server에서는 호스트가 NumPublicConnections에 포함되지 않으므로 +1 보정
 	if (UWorld* World = GetWorld())
 	{
 		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
@@ -18,8 +18,9 @@ void AMazeGameSession::InitOptions(const FString& Options)
 		{
 			if (const FNamedOnlineSession* Named = Sessions->GetNamedSession(NAME_GameSession))
 			{
-				MaxPlayers = Named->SessionSettings.NumPublicConnections;
-				UE_LOG(LogTemp, Log, TEXT("MazeGameSession: InitOptions - MaxPlayers synced to %d from NumPublicConnections"), MaxPlayers);
+				MaxPlayers = Named->SessionSettings.NumPublicConnections + 1;
+				UE_LOG(LogTemp, Log, TEXT("MazeGameSession: InitOptions - MaxPlayers=%d (NumPublicConnections=%d +1 for host)"),
+					MaxPlayers, Named->SessionSettings.NumPublicConnections);
 			}
 		}
 	}
@@ -27,7 +28,7 @@ void AMazeGameSession::InitOptions(const FString& Options)
 
 FString AMazeGameSession::ApproveLogin(const FString& Options)
 {
-	// 1. 부모 클래스 검증 (기본 에러 체크)
+	// 1. 부모 클래스 검증 (AtCapacity 포함 — MaxPlayers 기반 정원 체크)
 	FString Result = Super::ApproveLogin(Options);
 	if (!Result.IsEmpty())
 	{
@@ -41,50 +42,7 @@ FString AMazeGameSession::ApproveLogin(const FString& Options)
 		return TEXT("게임이 이미 시작됐습니다.");
 	}
 
-	// 3. 서버 풀 상태 확인
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeGameSession: ApproveLogin - no World"));
-		return TEXT("Server error: no World");
-	}
-	AGameMode* GameMode = Cast<AGameMode>(World->GetAuthGameMode());
-	if (!GameMode)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MazeGameSession: ApproveLogin - no GameMode"));
-		return TEXT("Server error: no GameMode");
-	}
-
-	const int32 CurrentPlayers = GameMode->GetNumPlayers();
-	const int32 TotalPending = PendingJoinCount + CurrentPlayers;
-
-	if (TotalPending >= MaxPlayers)
-	{
-		UE_LOG(LogTemp, Log, TEXT("MazeGameSession: ApproveLogin rejected (server full) - Current=%d, Pending=%d, Max=%d"),
-			CurrentPlayers, PendingJoinCount, MaxPlayers);
-		return TEXT("Server is full");
-	}
-
-	// 4. PendingJoinCount 증가 후 승인
-	PendingJoinCount++;
-	UE_LOG(LogTemp, Log, TEXT("MazeGameSession: ApproveLogin approved - PendingJoinCount=%d"), PendingJoinCount);
 	return FString();
-}
-
-void AMazeGameSession::RegisterPlayer(APlayerController* NewPlayer, const FUniqueNetIdRepl& UniqueId, bool bWasFromInvite)
-{
-	Super::RegisterPlayer(NewPlayer, UniqueId, bWasFromInvite);
-	
-	// 접속 완료 시 PendingJoinCount 감소
-	PendingJoinCount = FMath::Max(0, PendingJoinCount - 1);
-	UE_LOG(LogTemp, Log, TEXT("MazeGameSession: RegisterPlayer - PendingJoinCount=%d"), PendingJoinCount);
-}
-
-void AMazeGameSession::DecPendingJoin()
-{
-	// 접속 실패 시 PendingJoinCount 감소
-	PendingJoinCount = FMath::Max(0, PendingJoinCount - 1);
-	UE_LOG(LogTemp, Log, TEXT("MazeGameSession: DecPendingJoin - PendingJoinCount=%d"), PendingJoinCount);
 }
 
 void AMazeGameSession::SetMatchStarted(bool bStarted)
@@ -138,19 +96,14 @@ int32 AMazeGameSession::GetExpectedPlayerCount() const
 		{
 			if (const FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
 			{
-				// GameStart 시점에 저장한 실제 인원수 우선 사용
 				int32 Expected = 0;
 				if (NamedSession->SessionSettings.Get(FName(TEXT("ExpectedPlayers")), Expected) && Expected > 0)
 				{
-					UE_LOG(LogTemp, Log, TEXT("MazeGameSession: GetExpectedPlayerCount from ExpectedPlayers = %d"), Expected);
 					return Expected;
 				}
 			}
 		}
 	}
 
-	// Fallback: 1 (최소 플레이어 수)
-	const int32 Fallback = 1;
-	UE_LOG(LogTemp, Warning, TEXT("MazeGameSession: No session, fallback ExpectedCount=%d"), Fallback);
-	return Fallback;
+	return 1;
 }
