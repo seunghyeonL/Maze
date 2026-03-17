@@ -92,5 +92,5 @@ private:
 	UPROPERTY() bool bPendingCreateLAN = false;
 
 	UPROPERTY() bool bPendingJoinAfterDestroy = false;
-	UPROPERTY() int32 PendingJoinIndex = -1;
+	UPROPERTY() FString PendingJoinSessionId;
 };

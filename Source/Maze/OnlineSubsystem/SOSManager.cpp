@@ -225,7 +225,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 	{
 		UE_LOG(LogTemp, Log, TEXT("MazeUI: JoinSession found existing GameSession; destroying then retry"));
 		bPendingJoinAfterDestroy = true;
-		PendingJoinIndex = ResultIndex;
+		PendingJoinSessionId = SessionSearch->SearchResults[ResultIndex].GetSessionIdStr();
 		DestroySession();
 		return;
 	}
@@ -342,7 +342,7 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 	{
 		bPendingCreateAfterDestroy = false;
 		bPendingJoinAfterDestroy = false;
-		PendingJoinIndex = -1;
+		PendingJoinSessionId.Reset();
 		PendingCreateMaxPlayers = 0;
 		bPendingCreateLAN = false;
 		return;
@@ -364,10 +364,35 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 	if (bPendingJoinAfterDestroy)
 	{
 		bPendingJoinAfterDestroy = false;
-		const int32 JoinIndex = PendingJoinIndex;
-		PendingJoinIndex = -1;
-		UE_LOG(LogTemp, Log, TEXT("MazeUI: Retrying JoinSession after destroy"));
-		JoinSessionByIndex(JoinIndex);
+		const FString SessionId = PendingJoinSessionId;
+		PendingJoinSessionId.Reset();
+
+		if (!SessionSearch.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MazeUI: JoinSession retry failed - no search results"));
+			OnSessionJoined.Broadcast(false);
+			return;
+		}
+
+		int32 ResolvedIndex = -1;
+		for (int32 i = 0; i < SessionSearch->SearchResults.Num(); ++i)
+		{
+			if (SessionSearch->SearchResults[i].GetSessionIdStr() == SessionId)
+			{
+				ResolvedIndex = i;
+				break;
+			}
+		}
+
+		if (ResolvedIndex == -1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MazeUI: JoinSession retry failed - session %s not found in search results"), *SessionId);
+			OnSessionJoined.Broadcast(false);
+			return;
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("MazeUI: Retrying JoinSession after destroy (index=%d)"), ResolvedIndex);
+		JoinSessionByIndex(ResolvedIndex);
 		return;
 	}
 }
