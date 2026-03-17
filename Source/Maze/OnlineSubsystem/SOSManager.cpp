@@ -31,9 +31,17 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 		}
 	}
 
+	if (State != ESOSState::Idle)
+	{
+		OnSessionCreated.Broadcast(false);
+		return;
+	}
+	State = ESOSState::Creating;
+
 	IOnlineSessionPtr Sessions = GetSessionInterface();
 	if (!Sessions.IsValid())
 	{
+		State = ESOSState::Idle;
 		OnSessionCreated.Broadcast(false);
 		return;
 	}
@@ -81,6 +89,7 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 	if (!bStarted)
 	{
 		Sessions->ClearOnCreateSessionCompleteDelegate_Handle(CreateHandle);
+		State = ESOSState::Idle;
 		OnSessionCreated.Broadcast(false);
 	}
 }
@@ -93,6 +102,7 @@ void USOSManager::HandleCreateSessionComplete(FName SessionName, bool bWasSucces
 		Sessions->ClearOnCreateSessionCompleteDelegate_Handle(CreateHandle);
 	}
 
+	State = ESOSState::Idle;
 	OnSessionCreated.Broadcast(bWasSuccessful);
 
 	if (!bWasSuccessful || !GetWorld()) return;
@@ -122,11 +132,12 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 	}
 
 	// 이미 검색 중이면 무시
-	if (FindHandle.IsValid())
+	if (State != ESOSState::Idle)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: FindSessions already in progress, ignoring"));
 		return;
 	}
+	State = ESOSState::Finding;
 
 	LastFoundSessions.Reset();
 
@@ -149,6 +160,7 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 	if (!bStarted)
 	{
 		Sessions->ClearOnFindSessionsCompleteDelegate_Handle(FindHandle);
+		State = ESOSState::Idle;
 		OnSessionsFound.Broadcast(false, {});
 	}
 }
@@ -161,6 +173,7 @@ void USOSManager::HandleFindSessionsComplete(bool bWasSuccessful)
 		Sessions->ClearOnFindSessionsCompleteDelegate_Handle(FindHandle);
 	}
 	FindHandle.Reset();
+	State = ESOSState::Idle;
 
 	if (!bWasSuccessful || !SessionSearch.IsValid())
 	{
@@ -190,9 +203,17 @@ void USOSManager::HandleFindSessionsComplete(bool bWasSuccessful)
 
 void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 {
+	if (State != ESOSState::Idle)
+	{
+		OnSessionJoined.Broadcast(false);
+		return;
+	}
+	State = ESOSState::Joining;
+
 	IOnlineSessionPtr Sessions = GetSessionInterface();
 	if (!Sessions.IsValid() || !SessionSearch.IsValid())
 	{
+		State = ESOSState::Idle;
 		OnSessionJoined.Broadcast(false);
 		return;
 	}
@@ -208,6 +229,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 
 	if (!SessionSearch->SearchResults.IsValidIndex(ResultIndex))
 	{
+		State = ESOSState::Idle;
 		OnSessionJoined.Broadcast(false);
 		return;
 	}
@@ -227,6 +249,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 	if (!bStarted)
 	{
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
+		State = ESOSState::Idle;
 		OnSessionJoined.Broadcast(false);
 	}
 }
@@ -238,6 +261,7 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	{
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
 	}
+	State = ESOSState::Idle;
 
 	const bool bSuccess = (Result == EOnJoinSessionCompleteResult::Success);
 	UE_LOG(LogTemp, Log, TEXT("MazeOSS: JoinSession result = %d"), static_cast<int32>(Result));
@@ -273,9 +297,12 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 
 void USOSManager::DestroySession()
 {
+	State = ESOSState::Destroying;
+
 	IOnlineSessionPtr Sessions = GetSessionInterface();
 	if (!Sessions.IsValid())
 	{
+		State = ESOSState::Idle;
 		OnSessionDestroyed.Broadcast(false);
 		return;
 	}
@@ -288,6 +315,7 @@ void USOSManager::DestroySession()
 	if (!bStarted)
 	{
 		Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
+		State = ESOSState::Idle;
 		OnSessionDestroyed.Broadcast(false);
 	}
 }
@@ -300,6 +328,7 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 		Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
 	}
 
+	State = ESOSState::Idle;
 	OnSessionDestroyed.Broadcast(bWasSuccessful);
 
 	if (!bWasSuccessful)

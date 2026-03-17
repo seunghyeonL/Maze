@@ -5,6 +5,16 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "SOSManager.generated.h"
 
+UENUM(BlueprintType)
+enum class ESOSState : uint8
+{
+	Idle       UMETA(DisplayName="Idle"),
+	Creating   UMETA(DisplayName="Creating"),
+	Finding    UMETA(DisplayName="Finding"),
+	Joining    UMETA(DisplayName="Joining"),
+	Destroying UMETA(DisplayName="Destroying"),
+};
+
 /**
  * UI에서 다루기 쉬운 "검색 결과 요약"용 구조체
  */
@@ -68,6 +78,8 @@ private:
 	FDelegateHandle FindHandle;
 	FDelegateHandle JoinHandle;
 	FDelegateHandle DestroyHandle;
+
+	ESOSState State = ESOSState::Idle;
 
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
