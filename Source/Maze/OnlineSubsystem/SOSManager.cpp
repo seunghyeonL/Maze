@@ -89,6 +89,7 @@ void USOSManager::CreateSession(int32 MaxPlayers, const FString& SessionMap, boo
 	if (!bStarted)
 	{
 		Sessions->ClearOnCreateSessionCompleteDelegate_Handle(CreateHandle);
+		CreateHandle.Reset();
 		State = ESOSState::Idle;
 		OnSessionCreated.Broadcast(false);
 	}
@@ -101,6 +102,7 @@ void USOSManager::HandleCreateSessionComplete(FName SessionName, bool bWasSucces
 	{
 		Sessions->ClearOnCreateSessionCompleteDelegate_Handle(CreateHandle);
 	}
+	CreateHandle.Reset();
 
 	State = ESOSState::Idle;
 	OnSessionCreated.Broadcast(bWasSuccessful);
@@ -160,6 +162,7 @@ void USOSManager::FindSessions(int32 MaxResults, bool bLAN)
 	if (!bStarted)
 	{
 		Sessions->ClearOnFindSessionsCompleteDelegate_Handle(FindHandle);
+		FindHandle.Reset();
 		State = ESOSState::Idle;
 		OnSessionsFound.Broadcast(false, {});
 	}
@@ -249,6 +252,7 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 	if (!bStarted)
 	{
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
+		JoinHandle.Reset();
 		State = ESOSState::Idle;
 		OnSessionJoined.Broadcast(false);
 	}
@@ -261,6 +265,7 @@ void USOSManager::HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	{
 		Sessions->ClearOnJoinSessionCompleteDelegate_Handle(JoinHandle);
 	}
+	JoinHandle.Reset();
 	State = ESOSState::Idle;
 
 	const bool bSuccess = (Result == EOnJoinSessionCompleteResult::Success);
@@ -315,6 +320,7 @@ void USOSManager::DestroySession()
 	if (!bStarted)
 	{
 		Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
+		DestroyHandle.Reset();
 		State = ESOSState::Idle;
 		OnSessionDestroyed.Broadcast(false);
 	}
@@ -327,6 +333,7 @@ void USOSManager::HandleDestroySessionComplete(FName SessionName, bool bWasSucce
 	{
 		Sessions->ClearOnDestroySessionCompleteDelegate_Handle(DestroyHandle);
 	}
+	DestroyHandle.Reset();
 
 	State = ESOSState::Idle;
 	OnSessionDestroyed.Broadcast(bWasSuccessful);
