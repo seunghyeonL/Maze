@@ -23,8 +23,13 @@ FString AMazeGameSession::ApproveLogin(const FString& Options)
 	}
 
 	// 3. 서버 풀 상태 확인
-	AGameModeBase* GameModeBase = GetWorld()->GetAuthGameMode();
-	AGameMode* GameMode = Cast<AGameMode>(GameModeBase);
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MazeGameSession: ApproveLogin - no World"));
+		return TEXT("Server error: no World");
+	}
+	AGameMode* GameMode = Cast<AGameMode>(World->GetAuthGameMode());
 	if (!GameMode)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeGameSession: ApproveLogin - no GameMode"));
