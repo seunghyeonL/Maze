@@ -11,6 +11,9 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "Settings/MazeLevelSettings.h"
+#include "OnlineSubsystemUtils.h"
+#include "Online/OnlineSessionNames.h"
+#include "OnlineSessionSettings.h"
 
 AMazeGameMode::AMazeGameMode()
 {
@@ -260,7 +263,30 @@ void AMazeGameMode::OnGoalReached(APlayerController* Winner)
 
 void AMazeGameMode::ReturnToLobby()
 {
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Returning to TitleLevel (seamless)..."));
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Returning to TitleLevel..."));
+
+	// 세션 메타데이터 복원 (로비 복귀 — 중간 참가 재허용)
+	if (IOnlineSessionPtr Sessions = Online::GetSessionInterface(GetWorld()))
+	{
+		if (FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
+		{
+			NamedSession->SessionSettings.bAllowJoinInProgress = true;
+			NamedSession->SessionSettings.Set(
+				SETTING_MAPNAME,
+				GetDefault<UMazeLevelSettings>()->GetTitleLevelPath(),
+				EOnlineDataAdvertisementType::ViaOnlineService
+			);
+			Sessions->UpdateSession(NAME_GameSession, NamedSession->SessionSettings, true);
+			UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Session metadata restored - bAllowJoinInProgress=true, MAPNAME=TitleLevel"));
+		}
+	}
+
+	// 다음 라운드를 위해 매치 상태 초기화
+	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GameSession))
+	{
+		MazeSession->SetMatchStarted(false);
+	}
+
 	GetWorld()->ServerTravel(FString::Printf(TEXT("%s?listen"), *GetDefault<UMazeLevelSettings>()->GetTitleLevelPath()));
 }
 
