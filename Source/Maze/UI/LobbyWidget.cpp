@@ -18,6 +18,11 @@
 #include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "OnlineSubsystemUtils.h"
+#include "Online/OnlineSessionNames.h"
+#include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
 void ULobbyWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -240,6 +245,22 @@ void ULobbyWidget::HandleGameStartClicked()
 	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GetWorld()->GetAuthGameMode()->GameSession))
 	{
 		MazeSession->SetExpectedPlayers(GameState->PlayerArray.Num());
+	}
+
+	// 6-A. 세션 메타데이터 업데이트 (게임 시작 — 중간 참가 차단)
+	if (IOnlineSessionPtr Sessions = Online::GetSessionInterface(GetWorld()))
+	{
+		if (FNamedOnlineSession* NamedSession = Sessions->GetNamedSession(NAME_GameSession))
+		{
+			NamedSession->SessionSettings.bAllowJoinInProgress = false;
+			NamedSession->SessionSettings.Set(
+				SETTING_MAPNAME,
+				GetDefault<UMazeLevelSettings>()->GetMazeLevelPath(),
+				EOnlineDataAdvertisementType::ViaOnlineService
+			);
+			Sessions->UpdateSession(NAME_GameSession, NamedSession->SessionSettings, true);
+			UE_LOG(LogTemp, Log, TEXT("MazeUI: Session metadata updated - bAllowJoinInProgress=false, MAPNAME=MazeLevel"));
+		}
 	}
 
 	// 6. MazeSize를 GameState에서 읽기
