@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "Helper/MazeGenerator.h"
 #include "MazeGameMode.generated.h"
 
 class AMazeGameState;
@@ -58,6 +59,7 @@ protected:
 private:
 	void TryStartGameFlow();
 	void GenerateAndSpawnMaze();
+	void OnWallSpawnComplete();
 	void TeleportPlayers();
 	void OnArrivalTimeout();
 	void ReturnToLobby();
@@ -74,4 +76,9 @@ private:
 	FTimerHandle CountdownTimerHandle;
 	FTimerHandle ArrivalTimeoutHandle;
 	FTimerHandle ReturnTimerHandle;
+
+	// Cached data for OnWallSpawnComplete callback
+	TArray<FCellRow> CachedGrid;
+	int32 CachedPlayerNum = 0;
+	float CachedCellSize = 500.f;
 };

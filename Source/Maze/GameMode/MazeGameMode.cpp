@@ -137,70 +137,77 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 	// 1. 시드 생성 (비제로 보장)
 	const int32 Seed = FMath::Rand() | 1;
 	
-	const int32 PlayerNum = ArrivedPlayers.Num();
+	CachedPlayerNum = ArrivedPlayers.Num();
+	CachedCellSize = GS->CellSize;
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze %dx%d Players=%d CellSize=%.0f Seed=%d"),
-		MazeWidth, MazeHeight, PlayerNum, GS->CellSize, Seed);
+		MazeWidth, MazeHeight, CachedPlayerNum, CachedCellSize, Seed);
 	
 	// 2. 그리드 생성 (결정론적)
-	TArray<FCellRow> Grid;
-	Grid.SetNum(MazeHeight);
-	for (auto& Row : Grid)
+	CachedGrid.Reset();
+	CachedGrid.SetNum(MazeHeight);
+	for (auto& Row : CachedGrid)
 	{
 		Row.Cells.SetNum(MazeWidth);
 	}
-	UMazeGenerator::BuildMazeGrid(MazeHeight, MazeWidth, Seed, Grid);
+	UMazeGenerator::BuildMazeGrid(MazeHeight, MazeWidth, Seed, CachedGrid);
 	
-	// 3. 벽 로컬 스폰 (리플리케이트 없음 — BP_MazeWall bReplicates=false)
-	const int32 WallCount = UMazeGenerator::SpawnWalls(this, Grid, MazeHeight, MazeWidth, GS->CellSize, GS->WallClass);
-	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Server spawned %d walls"), WallCount);
-	
-	// 4. 게임플레이 액터 스폰 (서버 리플리케이트 — 골/봇/TargetPoint)
-	UMazeGenerator::SpawnGameplayActors(this, Grid, MazeHeight, MazeWidth, GS->CellSize, PlayerNum, GoalActorClass, BotClass, BotCount);
-	
-	// 5. 시드+크기 클라이언트 전달 → OnRep_MazeSeed에서 클라이언트 벽 스폰
+	// 3. 클라이언트에 시드 전달 → OnRep_MazeSeed에서 클라이언트 벽 스폰 시작
 	GS->SetMazeData(Seed, MazeWidth, MazeHeight);
 	
-	// === 이 아래 코드는 기존 그대로 유지 (MazeTargetPoint 수집, Phase, 타이머) ===
-	// 스폰된 MazeTargetPoint 수집, PlayerIndex 기준 정렬
+	// 4. 서버: 지연 벽 스폰 → 완료 후 OnWallSpawnComplete 콜백
+	UMazeGenerator::SpawnWallsWithDelay(
+		this,
+		CachedGrid,
+		MazeHeight, MazeWidth,
+		CachedCellSize,
+		GS->WallClass,
+		GS->WallSpawnInterval,
+		FSimpleDelegate::CreateUObject(this, &AMazeGameMode::OnWallSpawnComplete));
+}
+
+void AMazeGameMode::OnWallSpawnComplete()
+{
+	AMazeGameState* GS = GetGameState<AMazeGameState>();
+	if (!GS) return;
+
+	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Wall spawn complete. Spawning gameplay actors..."));
+
+	// 게임플레이 액터 스폰 (서버 리플리케이트 — 골/봇/TargetPoint)
+	UMazeGenerator::SpawnGameplayActors(
+		this, CachedGrid,
+		MazeHeight, MazeWidth,
+		CachedCellSize,
+		CachedPlayerNum,
+		GoalActorClass, BotClass, BotCount);
+
+	// Grid 메모리 해제
+	CachedGrid.Reset();
+
+	// MazeTargetPoint 수집
 	MazeTargetPoints.Reset();
 	for (TActorIterator<AMazeTargetPoint> It(GetWorld()); It; ++It)
-	{
 		MazeTargetPoints.Add(*It);
-	}
 	MazeTargetPoints.Sort([](const AMazeTargetPoint& A, const AMazeTargetPoint& B)
-	{
-		return A.PlayerIndex < B.PlayerIndex;
-	});
+		{ return A.PlayerIndex < B.PlayerIndex; });
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Found %d MazeTargetPoints"), MazeTargetPoints.Num());
-	
-	// GameState 업데이트 (Phase: Countdown)
-	if (AMazeGameState* GS2 = GetGameState<AMazeGameState>())
-	{
-		GS2->SetPhase(EMazePhase::Countdown);
-		GS2->CountdownEndTime = GetWorld()->GetTimeSeconds() + CountdownDuration;
-		GS2->ForceNetUpdate();
-	}
-	
+
+	// Phase: Countdown
+	GS->SetPhase(EMazePhase::Countdown);
+	GS->CountdownEndTime = GetWorld()->GetTimeSeconds() + CountdownDuration;
+	GS->ForceNetUpdate();
+
 	// 게임 시작 알림
-	if (GameSession)
-	{
-		GameSession->HandleMatchHasStarted();
-	}
-	
-	// SetMatchStarted 호출
+	if (GameSession) GameSession->HandleMatchHasStarted();
 	if (AMazeGameSession* MazeSession = Cast<AMazeGameSession>(GameSession))
-	{
 		MazeSession->SetMatchStarted(true);
-	}
-	
+
 	// 카운트다운 타이머
 	GetWorldTimerManager().SetTimer(
 		CountdownTimerHandle,
 		this,
 		&AMazeGameMode::TeleportPlayers,
 		CountdownDuration,
-		false
-	);
+		false);
 }
 
 void AMazeGameMode::TeleportPlayers()
