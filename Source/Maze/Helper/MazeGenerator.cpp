@@ -88,16 +88,27 @@ int32 UMazeGenerator::SpawnWalls(
 		return 0;
 	}
 
+	const TArray<FWallSpawnInfo> WallData = CollectWallSpawnData(Grid, Height, Width, CellSize);
+
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	// SpawnParams.bCreateActorPackage = false;
-	
-	int32 SpawnedWallCount = 0;
-	auto SpawnWall = [&](const FVector& Pos, const FRotator& Rot)
+
+	for (const FWallSpawnInfo& Info : WallData)
 	{
-		World->SpawnActor<AActor>(WallClass, Pos, Rot, SpawnParams);
-		++SpawnedWallCount;
-	};
+		World->SpawnActor<AActor>(WallClass, Info.Position, Info.Rotation, SpawnParams);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Spawned %d walls"), WallData.Num());
+	return WallData.Num();
+}
+
+TArray<FWallSpawnInfo> UMazeGenerator::CollectWallSpawnData(
+	const TArray<FCellRow>& Grid,
+	int32 Height,
+	int32 Width,
+	float CellSize)
+{
+	TArray<FWallSpawnInfo> Result;
 
 	for (int32 r = 0; r < Height; ++r)
 	{
@@ -105,42 +116,35 @@ int32 UMazeGenerator::SpawnWalls(
 		{
 			if (r == 0)
 			{
-				const FVector Pos = HorizontalBoundaryCenter(0, c, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+				Result.Add({ HorizontalBoundaryCenter(0, c, CellSize, 0.f), FRotator(0.f, 0.f, 0.f) });
 			}
 
 			if (c == 0)
 			{
-				const FVector Pos = VerticalBoundaryCenter(r, 0, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+				Result.Add({ VerticalBoundaryCenter(r, 0, CellSize, 0.f), FRotator(0.f, 90.f, 0.f) });
 			}
 
 			if (c == Width - 1)
 			{
-				const FVector Pos = VerticalBoundaryCenter(r, Width, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+				Result.Add({ VerticalBoundaryCenter(r, Width, CellSize, 0.f), FRotator(0.f, 90.f, 0.f) });
 			}
 			else if (Grid[r].Cells[c].RightWall)
 			{
-				const FVector Pos = VerticalBoundaryCenter(r, c + 1, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 90.f, 0.f));
+				Result.Add({ VerticalBoundaryCenter(r, c + 1, CellSize, 0.f), FRotator(0.f, 90.f, 0.f) });
 			}
 
 			if (r == Height - 1)
 			{
-				const FVector Pos = HorizontalBoundaryCenter(Height, c, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+				Result.Add({ HorizontalBoundaryCenter(Height, c, CellSize, 0.f), FRotator(0.f, 0.f, 0.f) });
 			}
 			else if (Grid[r].Cells[c].DownWall)
 			{
-				const FVector Pos = HorizontalBoundaryCenter(r + 1, c, CellSize, 0.f);
-				SpawnWall(Pos, FRotator(0.f, 0.f, 0.f));
+				Result.Add({ HorizontalBoundaryCenter(r + 1, c, CellSize, 0.f), FRotator(0.f, 0.f, 0.f) });
 			}
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("MazeGenerator: Spawned %d walls"), SpawnedWallCount);
-	return SpawnedWallCount;
+	return Result;
 }
 
 void UMazeGenerator::SpawnGameplayActors(

@@ -42,6 +42,13 @@ struct FCellRow
 	FCellRow() {}
 };
 
+/** 벽 스폰 위치/회전 정보 */
+struct FWallSpawnInfo
+{
+	FVector  Position;
+	FRotator Rotation;
+};
+
 UCLASS()
 class MAZE_API UMazeGenerator : public UBlueprintFunctionLibrary
 {
@@ -69,6 +76,12 @@ public:
 		int32 Width,
 		float CellSize,
 		TSubclassOf<AActor> WallClass);
+
+	static TArray<FWallSpawnInfo> CollectWallSpawnData(
+		const TArray<FCellRow>& Grid,
+		int32 Height,
+		int32 Width,
+		float CellSize);
 
 	static void SpawnGameplayActors(
 		UObject* WorldContextObject,
