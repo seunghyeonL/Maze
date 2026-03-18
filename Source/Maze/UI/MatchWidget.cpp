@@ -176,7 +176,7 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));
-		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeLevelSettings>()->GetTitleLevelPath(), false);
+		SOSManager->CreateSession(MaxPlayerNum, GetDefault<UMazeLevelSettings>()->GetTitleLevelPath(), true);
 	}
 	else
 	{
@@ -190,7 +190,7 @@ void UMatchWidget::HandleFindLobbyClicked()
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("로비 검색 중...")));
-		SOSManager->FindSessions(50, false);
+		SOSManager->FindSessions(50, true);
 	}
 	else
 	{

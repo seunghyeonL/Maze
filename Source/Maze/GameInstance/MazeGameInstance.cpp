@@ -35,10 +35,10 @@ void UMazeGameInstance::Shutdown()
 void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
 {
 	// [진단 로그] 패키징/스팀 테스트 시 주석 해제
-	// UE_LOG(LogTemp, Warning, TEXT("MazeGI: OnNetworkFailure - Type: %d, NetDriver: %s, Error: %s"),
-	// 	static_cast<int32>(FailureType),
-	// 	NetDriver ? *NetDriver->GetName() : TEXT("nullptr"),
-	// 	*ErrorString);
+	UE_LOG(LogTemp, Warning, TEXT("MazeGI: OnNetworkFailure - Type: %d, NetDriver: %s, Error: %s"),
+		static_cast<int32>(FailureType),
+		NetDriver ? *NetDriver->GetName() : TEXT("nullptr"),
+		*ErrorString);
 
 	// === 필터 (처리 대상이 아니면 early return) ===
 
@@ -49,17 +49,20 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 	}
 	if (!World)
 	{
-		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - no World"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - no World"));
 		return;
 	}
 
 	const ENetMode NetMode = World->GetNetMode();
-	// UE_LOG(LogTemp, Warning, TEXT("MazeGI: NetMode=%d (0=Standalone,1=DedicatedServer,2=ListenServer,3=Client)"), static_cast<int32>(NetMode));
+	UE_LOG(LogTemp, Warning, TEXT("MazeGI: NetMode=%d (0=Standalone,1=DedicatedServer,2=ListenServer,3=Client)"), static_cast<int32>(NetMode));
+
+	IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
+	const bool bHasGameSession = Sessions.IsValid() && (Sessions->GetNamedSession(NAME_GameSession) != nullptr);
 
 	// 호스트/서버는 무시 (자체 퇴장 로직으로 처리)
 	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
 	{
-		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - host/server"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - host/server"));
 		return;
 	}
 
@@ -67,10 +70,9 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 	// 세션 없으면 시작 시 PendingNetDriver 노이즈이므로 무시
 	if (NetMode == NM_Standalone)
 	{
-		IOnlineSessionPtr Sessions = Online::GetSessionInterface(World);
-		if (!Sessions.IsValid() || !Sessions->GetNamedSession(NAME_GameSession))
+		if (!bHasGameSession)
 		{
-			// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - standalone no session"));
+			UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - standalone no session"));
 			return;
 		}
 	}
@@ -79,7 +81,7 @@ void UMazeGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 
 	if (bHandlingFailure)
 	{
-		// UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - bHandlingFailure guard"));
+		UE_LOG(LogTemp, Warning, TEXT("MazeGI: FILTERED - bHandlingFailure guard"));
 		return;
 	}
 
