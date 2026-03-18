@@ -168,6 +168,6 @@ void AMazeGameState::OnRep_MazeSeed()
         UE_LOG(LogTemp, Error, TEXT("MazeGameState: WallClass is null — cannot spawn walls on client"));
         return;
     }
-    const int32 WallCount = UMazeGenerator::SpawnWalls(this, Grid, MazeHeight, MazeWidth, CellSize, WallClass);
-    UE_LOG(LogTemp, Log, TEXT("MazeGameState: Client spawned %d walls (Seed=%d)"), WallCount, MazeSeed);
+    UMazeGenerator::SpawnWallsWithDelay(this, Grid, MazeHeight, MazeWidth, CellSize, WallClass, WallSpawnInterval);
+    UE_LOG(LogTemp, Log, TEXT("MazeGameState: Client spawning walls with delay (Seed=%d, Interval=%.3f)"), MazeSeed, WallSpawnInterval);
 }
