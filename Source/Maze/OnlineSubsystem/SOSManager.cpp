@@ -220,6 +220,13 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 		return;
 	}
+	
+	if (!SessionSearch->SearchResults.IsValidIndex(ResultIndex))
+	{
+		State = ESOSState::Idle;
+		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
+		return;
+	}
 
 	if (Sessions->GetNamedSession(GAME_SESSION_NAME) != nullptr)
 	{
@@ -227,13 +234,6 @@ void USOSManager::JoinSessionByIndex(int32 ResultIndex)
 		bPendingJoinAfterDestroy = true;
 		PendingJoinSessionId = SessionSearch->SearchResults[ResultIndex].GetSessionIdStr();
 		DestroySession();
-		return;
-	}
-
-	if (!SessionSearch->SearchResults.IsValidIndex(ResultIndex))
-	{
-		State = ESOSState::Idle;
-		OnSessionJoined.Broadcast(false, static_cast<int32>(EOnJoinSessionCompleteResult::UnknownError));
 		return;
 	}
 
