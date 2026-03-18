@@ -54,6 +54,9 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Maze|Gameplay")
     float CellSize = 500.f;
 
+    UPROPERTY(EditDefaultsOnly, Category="Maze|Gameplay")
+    float WallSpawnInterval = 0.02f;
+
     UPROPERTY(EditDefaultsOnly, Category="Maze|UI")
     TSubclassOf<UMazeCountdownWidget> CountdownWidgetClass;
 

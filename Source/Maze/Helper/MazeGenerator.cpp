@@ -4,6 +4,7 @@
 
 #include "GameFramework/Pawn.h"
 #include "Math/RandomStream.h"
+#include "TimerManager.h"
 #include "../Actor/MazeTargetPoint.h"
 
 void UMazeGenerator::GenerateMaze(
@@ -145,6 +146,83 @@ TArray<FWallSpawnInfo> UMazeGenerator::CollectWallSpawnData(
 	}
 
 	return Result;
+}
+
+void UMazeGenerator::SpawnWallsWithDelay(
+	UObject* WorldContextObject,
+	const TArray<FCellRow>& Grid,
+	int32 Height,
+	int32 Width,
+	float CellSize,
+	TSubclassOf<AActor> WallClass,
+	float SpawnInterval,
+	FSimpleDelegate OnComplete)
+{
+	UWorld* World = WorldContextObject
+		? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull)
+		: nullptr;
+
+	if (!World || !WallClass)
+	{
+		OnComplete.ExecuteIfBound();
+		return;
+	}
+
+	TArray<FWallSpawnInfo> WallData = CollectWallSpawnData(Grid, Height, Width, CellSize);
+	const int32 Total = WallData.Num();
+
+	if (Total == 0)
+	{
+		OnComplete.ExecuteIfBound();
+		return;
+	}
+
+	// 타이머 상태를 람다가 공유할 수 있도록 TSharedPtr에 담음
+	struct FWallSpawnState
+	{
+		TArray<FWallSpawnInfo>   WallData;
+		TSubclassOf<AActor>      WallClass;
+		TWeakObjectPtr<UWorld>   World;
+		FSimpleDelegate          OnComplete;
+	};
+
+	TSharedPtr<FWallSpawnState> State = MakeShared<FWallSpawnState>();
+	State->WallData    = MoveTemp(WallData);
+	State->WallClass   = WallClass;
+	State->World       = World;
+	State->OnComplete  = MoveTemp(OnComplete);
+
+	for (int32 i = 0; i < Total; ++i)
+	{
+		const bool bLast  = (i == Total - 1);
+		const float Delay = i * SpawnInterval;
+
+		FTimerHandle Handle;   // 로컬 핸들 — fire-and-forget
+		World->GetTimerManager().SetTimer(
+			Handle,
+			[State, i, bLast]()
+			{
+				if (!State->World.IsValid()) return;
+
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride =
+					ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+				State->World->SpawnActor<AActor>(
+					State->WallClass,
+					State->WallData[i].Position,
+					State->WallData[i].Rotation,
+					SpawnParams);
+
+				if (bLast)
+				{
+					State->OnComplete.ExecuteIfBound();
+				}
+			},
+			FMath::Max(Delay, KINDA_SMALL_NUMBER),
+			false
+		);
+	}
 }
 
 void UMazeGenerator::SpawnGameplayActors(

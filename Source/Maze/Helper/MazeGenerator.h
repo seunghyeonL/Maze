@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Delegates/DelegateCombinations.h"
 #include "MazeGenerator.generated.h"
 
 /**
@@ -82,6 +83,16 @@ public:
 		int32 Height,
 		int32 Width,
 		float CellSize);
+
+	static void SpawnWallsWithDelay(
+		UObject* WorldContextObject,
+		const TArray<FCellRow>& Grid,
+		int32 Height,
+		int32 Width,
+		float CellSize,
+		TSubclassOf<AActor> WallClass,
+		float SpawnInterval,
+		FSimpleDelegate OnComplete = FSimpleDelegate());
 
 	static void SpawnGameplayActors(
 		UObject* WorldContextObject,
