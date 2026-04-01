@@ -27,6 +27,11 @@ Source/Maze/
 │   └── AMazeGameMode : AGameModeBase
 │       → BP_MazeGameMode                         /Game/Blueprints
 │
+├── GameSession/
+│   └── AMazeGameSession : AGameSession
+│       - ApproveLogin으로 게임 시작 후 Join 차단
+│       - ExpectedPlayers 세션 메타데이터 관리
+│
 ├── GameState/
 │   ├── AMazeGameState : AGameStateBase
 │   │   → BP_MazeGameState                        /Game/Blueprints

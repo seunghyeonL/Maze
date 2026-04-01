@@ -38,3 +38,6 @@ skills-lock.json
 package-lock.json
 
 nul
+
+.claude/
+.omc/

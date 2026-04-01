@@ -1,9 +1,7 @@
-# Maze — 멀티플레이어 미로 탈출 게임
+# Maze
 
-Unreal Engine 5.6 기반의 멀티플레이어 미로 탈출 게임입니다.
-Listen Server 아키텍처로 LAN 및 Steam 환경에서 동작합니다.
-
----
+- Unreal Engine 5.6 기반의 멀티플레이어 미로 탈출 게임입니다.
+- Listen Server 아키텍처로 LAN 및 Steam 환경에서 동작합니다.
 
 ## 기술 스택
 
@@ -16,11 +14,11 @@ Listen Server 아키텍처로 LAN 및 Steam 환경에서 동작합니다.
 | **미로 생성** | Kruskal 알고리즘 (시드 기반) |
 | **AI** | StateTree + GAS (Gameplay Ability System) |
 
----
 
 ## 아키텍처
 
 ### 레벨 구조
+
 
 ```
 TitleLevel (매치메이킹)          MazeLevel (게임플레이)
@@ -30,9 +28,10 @@ TitleLevel (매치메이킹)          MazeLevel (게임플레이)
 └─ UI: Title → Match → Lobby   └─ MazeGenerator + Bot AI
 ```
 
-Non-Seamless `ServerTravel`로 레벨 전환 시 모든 GameFramework 클래스가 교체됩니다.
+- Non-Seamless `ServerTravel`로 레벨 전환 시 모든 GameFramework 클래스가 교체됩니다.
 
 ### GameInstance
+
 
 ```
 UMazeGameInstance
@@ -44,13 +43,8 @@ UMazeGameInstance
     Travel 중 네트워크 실패 시 안전한 복귀 처리
 ```
 
-### 네트워크
-
-- **미로 동기화**: 서버가 시드만 리플리케이트 → 클라이언트가 동일한 미로를 로컬 스폰
-  - 네트워크 비용: O(벽 × 플레이어) → O(플레이어)
-- **로비 UI**: 이벤트 기반 갱신 (OnRep → 델리게이트 → UI)
-
 ### 디렉토리 구조
+
 
 ```
 Source/Maze/
@@ -69,4 +63,7 @@ Source/Maze/
 └─ UI/                 # 위젯 (Title, Match, Lobby, Loading, Modal)
 ```
 
-> 📄 전체 클래스 구조 (C++ + Blueprint 상속 관계)는 [Docs/Class_Structure.md](Docs/Class_Structure.md) 참고
+### 문서
+
+- [전체 클래스 구조](Docs/Class_Structure.md)
+- [게임플로우 다이어그램](GameFlow_Diagram_Ascii.md)
