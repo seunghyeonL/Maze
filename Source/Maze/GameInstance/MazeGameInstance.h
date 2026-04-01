@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
@@ -6,8 +6,8 @@
 
 /**
  * Custom GameInstance for Maze project.
- * Handles network failures via GEngine->OnNetworkFailure() delegate.
- * Suppresses engine's default double-travel via empty HandleNetworkError override.
+ * Handles network failures via GEngine->OnNetworkFailure() delegate (the official C++ extension point).
+ * Performs session/UI cleanup; travel is delegated to the engine's ?closed path.
  */
 UCLASS()
 class MAZE_API UMazeGameInstance : public UGameInstance
@@ -19,14 +19,12 @@ public:
 	virtual void Shutdown() override;
 
 private:
-	/** Suppress engine's default double-travel behavior. */
-	virtual void HandleNetworkError(ENetworkFailure::Type FailureType, bool bIsServer) {}
-
 	/** Delegate callback for GEngine->OnNetworkFailure().
-	 *  Receives ErrorString and handles Korean detection + error message logic. */
+	 *  Performs session/UI cleanup. Travel is NOT performed here —
+	 *  the engine's CallHandleDisconnectForFailure handles it via ?closed → GameDefaultMap (TitleLevel). */
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
-	/** Guard flag to prevent recursive error handling within 2 seconds. */
+	/** Guard flag to prevent duplicate error handling within 2 seconds. */
 	bool bHandlingFailure = false;
 
 	/** Timer handle for failure guard timeout. */
