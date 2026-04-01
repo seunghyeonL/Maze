@@ -66,4 +66,4 @@ Source/Maze/
 ### 문서
 
 - [전체 클래스 구조](Docs/Class_Structure.md)
-- [게임플로우 다이어그램](GameFlow_Diagram_Ascii.md)
+- [게임플로우 다이어그램](Docs/GameFlow_Diagram_Ascii.md)
