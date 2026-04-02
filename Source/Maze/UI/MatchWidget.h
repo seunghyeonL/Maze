@@ -89,5 +89,6 @@ private:
 
 	FTimerHandle PendingErrorTimerHandle;
 	
+	UPROPERTY(EditDefaultsOnly)
 	int32 MaxPlayerNum = 4;
 };
