@@ -69,6 +69,9 @@ protected:
 
 	UFUNCTION()
 	void HandleExitToMatchingClicked();
+	
+	UFUNCTION()
+	void HandleExitToMatchingClickedInternal();
 
 	UFUNCTION()
 	void HandleReadyChanged(AMazeLobbyPlayerState* PlayerState, bool bIsReady);
@@ -97,6 +100,7 @@ private:
 	void ShowAlert(const FText& Title, const FText& Message);
 
 	FTimerHandle GameStartTimerHandle;
+	FTimerHandle ExitToMatchingTimerHandle;
 
 	UPROPERTY()
 	TWeakObjectPtr<AMazeLobbyGameState> BoundGameState;

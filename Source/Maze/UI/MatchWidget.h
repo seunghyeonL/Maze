@@ -54,6 +54,9 @@ protected:
 
 	UFUNCTION()
 	void HandleCreateLobbyClicked();
+	
+	UFUNCTION()
+	void HandleCreateLobbyClickedInternal();
 
 	UFUNCTION()
 	void HandleFindLobbyClicked();
@@ -88,6 +91,7 @@ private:
 	void CheckPendingError();
 
 	FTimerHandle PendingErrorTimerHandle;
+	FTimerHandle CreateLobbyTimerHandle;
 	
 	UPROPERTY(EditDefaultsOnly)
 	int32 MaxPlayerNum = 4;

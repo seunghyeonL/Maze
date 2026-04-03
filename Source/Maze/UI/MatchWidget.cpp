@@ -133,6 +133,7 @@ void UMatchWidget::NativeDestruct()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(PendingErrorTimerHandle);
+		World->GetTimerManager().ClearTimer(CreateLobbyTimerHandle);
 	}
 
 	Super::NativeDestruct();
@@ -179,6 +180,26 @@ void UMatchWidget::HandleCreateLobbyClicked()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match CreateSession clicked"));
+	
+	auto World = GetWorld();
+	if (!World) 
+		return;
+	
+	if (World->GetTimerManager().IsTimerActive(CreateLobbyTimerHandle))
+		return;
+	
+	// for button click sound time
+	World->GetTimerManager().SetTimer(
+		CreateLobbyTimerHandle,
+		this,
+		&UMatchWidget::HandleCreateLobbyClickedInternal,
+		0.15f,
+		false
+		);
+}
+
+void UMatchWidget::HandleCreateLobbyClickedInternal()
+{
 	if (SOSManager)
 	{
 		ShowLoading(FText::FromString(TEXT("세션 생성 중...")));

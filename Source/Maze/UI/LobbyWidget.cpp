@@ -119,6 +119,7 @@ void ULobbyWidget::NativeDestruct()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(GameStartTimerHandle);
+		World->GetTimerManager().ClearTimer(ExitToMatchingTimerHandle);
 	}
 
 	UnbindPlayerStates();
@@ -301,6 +302,25 @@ void ULobbyWidget::HandleExitToMatchingClicked()
 
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
 
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+	
+	if (World->GetTimerManager().IsTimerActive(ExitToMatchingTimerHandle))
+		return;
+	
+	// for button click sound time
+	World->GetTimerManager().SetTimer(
+		ExitToMatchingTimerHandle,
+		this,
+		&ULobbyWidget::HandleExitToMatchingClickedInternal,
+		0.15f,
+		false
+		);
+}
+
+void ULobbyWidget::HandleExitToMatchingClickedInternal()
+{
 	const FString TitleLevelUrl = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();
 
 	UWorld* World = GetWorld();
