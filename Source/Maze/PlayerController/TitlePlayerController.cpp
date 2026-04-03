@@ -11,6 +11,7 @@
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 void ATitlePlayerController::BeginPlay()
 {
@@ -237,6 +238,22 @@ void ATitlePlayerController::ApplyAudioSettings()
 	{
 		AudioDevice->SetSoundMixClassOverride(MasterSoundMix, SFXSoundClass, Settings->GetSFXVolume() * Master, Pitch, Fade, false);
 	}
+}
+
+void ATitlePlayerController::PlayButtonClickSound()
+{
+	if (!ButtonClickSound)
+	{
+		return;
+	}
+
+	float Volume = 1.f;
+	if (UMazeUserSettings* S = UMazeUserSettings::GetMazeUserSettings())
+	{
+		Volume = S->GetMasterVolume() * S->GetSFXVolume();
+	}
+
+	UGameplayStatics::PlaySound2D(this, ButtonClickSound, Volume);
 }
 
 void ATitlePlayerController::ToggleAudioSettings()

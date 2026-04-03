@@ -5,6 +5,7 @@
 #include "TitlePlayerController.generated.h"
 
 class UAudioSettingsWidget;
+class USoundBase;
 class USoundMix;
 class USoundClass;
 
@@ -24,6 +25,7 @@ public:
 
 	void ToggleAudioSettings();
 	void ApplyAudioSettings();
+	void PlayButtonClickSound();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
@@ -41,6 +43,9 @@ protected:
 	// ---- Audio Settings UI ----
 	UPROPERTY(EditDefaultsOnly, Category="Audio|UI")
 	TSubclassOf<UAudioSettingsWidget> AudioSettingsWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Audio")
+	TObjectPtr<USoundBase> ButtonClickSound;
 
 	// ---- SoundMix / SoundClass (에디터에서 할당) ----
 	UPROPERTY(EditDefaultsOnly, Category="Audio")

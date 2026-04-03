@@ -56,6 +56,11 @@ void UTitleWidget::CacheSubsystems()
 
 void UTitleWidget::HandleGameStartClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title GameStart clicked"));
 	if (UIFlowSubsystem)
 	{
@@ -66,12 +71,22 @@ void UTitleWidget::HandleGameStartClicked()
 
 void UTitleWidget::HandleExitClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title Exit clicked"));
 	UKismetSystemLibrary::QuitGame(this, GetOwningPlayer(), EQuitPreference::Quit, true);
 }
 
 void UTitleWidget::HandleSettingsClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Title Settings clicked"));
 	if (ATitlePlayerController* TitlePC = Cast<ATitlePlayerController>(GetOwningPlayer()))
 	{

@@ -3,6 +3,7 @@
 #include "LobbyPlayerEntryItem.h"
 #include "PlayerState/MazeLobbyPlayerState.h"
 #include "OnlineSubsystem/SOSManager.h"
+#include "PlayerController/TitlePlayerController.h"
 #include "UIFlowSubsystem.h"
 #include "LoadingOverlayWidget.h"
 #include "CommonModalWidget.h"
@@ -172,6 +173,11 @@ void ULobbyWidget::UpdateRoleVisibility()
 
 void ULobbyWidget::HandleReadyClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	AMazeLobbyPlayerState* LobbyPlayerState = GetOwningPlayerState<AMazeLobbyPlayerState>();
 	if (!LobbyPlayerState)
 	{
@@ -186,6 +192,11 @@ void ULobbyWidget::HandleReadyClicked()
 
 void ULobbyWidget::HandleGameStartClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	if (!IsLobbyHost())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MazeUI: GameStart clicked by non-host"));
@@ -283,6 +294,11 @@ void ULobbyWidget::HandleGameStartClicked()
 
 void ULobbyWidget::HandleExitToMatchingClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Lobby ExitToMatching clicked"));
 
 	const FString TitleLevelUrl = GetDefault<UMazeLevelSettings>()->GetTitleLevelPath();

@@ -5,6 +5,7 @@
 #include "LoadingOverlayWidget.h"
 #include "CommonModalWidget.h"
 #include "OnlineSubsystem/SOSManager.h"
+#include "PlayerController/TitlePlayerController.h"
 #include "Settings/MazeLevelSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
@@ -172,6 +173,11 @@ void UMatchWidget::ShowAlert(const FText& Title, const FText& Message)
 
 void UMatchWidget::HandleCreateLobbyClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match CreateSession clicked"));
 	if (SOSManager)
 	{
@@ -186,6 +192,11 @@ void UMatchWidget::HandleCreateLobbyClicked()
 
 void UMatchWidget::HandleFindLobbyClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match FindSessions clicked"));
 	if (SOSManager)
 	{
@@ -200,6 +211,11 @@ void UMatchWidget::HandleFindLobbyClicked()
 
 void UMatchWidget::HandleExitToTitleClicked()
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeUI: Match ExitToTitle clicked"));
 	if (UIFlowSubsystem)
 	{
@@ -210,6 +226,11 @@ void UMatchWidget::HandleExitToTitleClicked()
 
 void UMatchWidget::HandleLobbyItemClicked(UObject* Item)
 {
+	if (ATitlePlayerController* PC = Cast<ATitlePlayerController>(GetOwningPlayer()))
+	{
+		PC->PlayButtonClickSound();
+	}
+
 	const ULobbySearchResultItem* ResultItem = Cast<ULobbySearchResultItem>(Item);
 	if (!ResultItem)
 	{
