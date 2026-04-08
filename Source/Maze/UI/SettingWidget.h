@@ -9,6 +9,7 @@
 class USlider;
 class UTextBlock;
 class UButton;
+class UComboBoxString;
 class UCommonModalWidget;
 
 DECLARE_DELEGATE(FOnAudioSettingsCloseRequested);
@@ -61,6 +62,9 @@ protected:
 	UTextBlock* SFXValueText;
 
 	UPROPERTY(meta = (BindWidget))
+	UComboBoxString* ScreenModeComboBox;
+
+	UPROPERTY(meta = (BindWidget))
 	UButton* CloseButton;
 
 	UPROPERTY(meta = (BindWidget))
@@ -86,6 +90,9 @@ private:
 
 	UFUNCTION()
 	void OnSFXVolumeChanged(float Value);
+
+	UFUNCTION()
+	void OnScreenModeChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
 
 	UFUNCTION()
 	void OnCloseClicked();
