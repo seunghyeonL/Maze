@@ -1,31 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "UI/AudioSettingsWidget.h"
+#include "UI/SettingWidget.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Settings/MazeUserSettings.h"
 #include "CommonModalWidget.h"
 
-void UAudioSettingsWidget::NativeConstruct()
+void USettingWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	MasterVolumeSlider->OnValueChanged.AddDynamic(this, &UAudioSettingsWidget::OnMasterVolumeChanged);
-	BGMVolumeSlider->OnValueChanged.AddDynamic(this, &UAudioSettingsWidget::OnBGMVolumeChanged);
-	SFXVolumeSlider->OnValueChanged.AddDynamic(this, &UAudioSettingsWidget::OnSFXVolumeChanged);
-	CloseButton->OnClicked.AddDynamic(this, &UAudioSettingsWidget::OnCloseClicked);
+	MasterVolumeSlider->OnValueChanged.AddDynamic(this, &USettingWidget::OnMasterVolumeChanged);
+	BGMVolumeSlider->OnValueChanged.AddDynamic(this, &USettingWidget::OnBGMVolumeChanged);
+	SFXVolumeSlider->OnValueChanged.AddDynamic(this, &USettingWidget::OnSFXVolumeChanged);
+	CloseButton->OnClicked.AddDynamic(this, &USettingWidget::OnCloseClicked);
 
 	if (ExitToTitleButton)
 	{
-		ExitToTitleButton->OnClicked.AddDynamic(this, &UAudioSettingsWidget::OnExitToTitleClicked);
+		ExitToTitleButton->OnClicked.AddDynamic(this, &USettingWidget::OnExitToTitleClicked);
 		ExitToTitleButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 	InitializeSliderValues();
 }
 
-void UAudioSettingsWidget::InitializeSliderValues()
+void USettingWidget::InitializeSliderValues()
 {
 	UMazeUserSettings* Settings = UMazeUserSettings::GetMazeUserSettings();
 	if (!Settings)
@@ -46,7 +46,7 @@ void UAudioSettingsWidget::InitializeSliderValues()
 	bInitializing = false;
 }
 
-void UAudioSettingsWidget::OnMasterVolumeChanged(float Value)
+void USettingWidget::OnMasterVolumeChanged(float Value)
 {
 	if (bInitializing)
 	{
@@ -62,7 +62,7 @@ void UAudioSettingsWidget::OnMasterVolumeChanged(float Value)
 	OnVolumeUpdated.ExecuteIfBound();
 }
 
-void UAudioSettingsWidget::OnBGMVolumeChanged(float Value)
+void USettingWidget::OnBGMVolumeChanged(float Value)
 {
 	if (bInitializing)
 	{
@@ -78,7 +78,7 @@ void UAudioSettingsWidget::OnBGMVolumeChanged(float Value)
 	OnVolumeUpdated.ExecuteIfBound();
 }
 
-void UAudioSettingsWidget::OnSFXVolumeChanged(float Value)
+void USettingWidget::OnSFXVolumeChanged(float Value)
 {
 	if (bInitializing)
 	{
@@ -94,12 +94,12 @@ void UAudioSettingsWidget::OnSFXVolumeChanged(float Value)
 	OnVolumeUpdated.ExecuteIfBound();
 }
 
-void UAudioSettingsWidget::OnCloseClicked()
+void USettingWidget::OnCloseClicked()
 {
 	OnCloseRequested.ExecuteIfBound();
 }
 
-void UAudioSettingsWidget::SetExitToTitleVisible(bool bVisible)
+void USettingWidget::SetExitToTitleVisible(bool bVisible)
 {
 	if (ExitToTitleButton)
 	{
@@ -107,21 +107,21 @@ void UAudioSettingsWidget::SetExitToTitleVisible(bool bVisible)
 	}
 }
 
-void UAudioSettingsWidget::OnExitToTitleClicked()
+void USettingWidget::OnExitToTitleClicked()
 {
 	if (!ConfirmExitModal || ConfirmExitModal->IsShowing())
 	{
 		return;
 	}
 
-	ConfirmExitModal->OnConfirmed.AddDynamic(this, &UAudioSettingsWidget::HandleExitConfirmed);
+	ConfirmExitModal->OnConfirmed.AddDynamic(this, &USettingWidget::HandleExitConfirmed);
 	ConfirmExitModal->ShowConfirm(
 		FText::FromString(TEXT("나가기")),
 		FText::FromString(TEXT("게임에서 나가시겠습니까?"))
 	);
 }
 
-void UAudioSettingsWidget::HandleExitConfirmed()
+void USettingWidget::HandleExitConfirmed()
 {
 	OnExitToTitleRequested.ExecuteIfBound();
 }

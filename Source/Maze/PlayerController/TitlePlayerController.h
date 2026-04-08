@@ -4,7 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "TitlePlayerController.generated.h"
 
-class UAudioSettingsWidget;
+class USettingWidget;
 class USoundBase;
 class USoundMix;
 class USoundClass;
@@ -42,7 +42,7 @@ protected:
 
 	// ---- Audio Settings UI ----
 	UPROPERTY(EditDefaultsOnly, Category="Audio|UI")
-	TSubclassOf<UAudioSettingsWidget> AudioSettingsWidgetClass;
+	TSubclassOf<USettingWidget> AudioSettingsWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Audio")
 	TObjectPtr<USoundBase> ButtonClickSound;
@@ -71,7 +71,7 @@ private:
 	void CleanupAudio();
 
 	UPROPERTY()
-	TObjectPtr<UAudioSettingsWidget> AudioSettingsWidgetInstance;
+	TObjectPtr<USettingWidget> AudioSettingsWidgetInstance;
 
 	bool bAudioSettingsOpen = false;
 	bool bSavedShowMouseCursor = false;

@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "MazePlayerController.generated.h"
 
-class UAudioSettingsWidget;
+class USettingWidget;
 class USoundMix;
 class USoundClass;
 
@@ -27,7 +27,7 @@ protected:
 	// ---- Audio Settings UI ----
 
 	UPROPERTY(EditDefaultsOnly, Category="Audio|UI")
-	TSubclassOf<UAudioSettingsWidget> AudioSettingsWidgetClass;
+	TSubclassOf<USettingWidget> AudioSettingsWidgetClass;
 
 	// ---- SoundMix / SoundClass (에디터에서 할당) ----
 
@@ -57,7 +57,7 @@ void InitializeAudio();
 	void HandleExitToTitle();
 
 	UPROPERTY()
-	TObjectPtr<UAudioSettingsWidget> AudioSettingsWidgetInstance;
+	TObjectPtr<USettingWidget> AudioSettingsWidgetInstance;
 
 	bool bAudioSettingsOpen = false;
 };

@@ -5,7 +5,7 @@
 #include "../UI/TitleWidget.h"
 #include "../UI/UIFlowSubsystem.h"
 
-#include "UI/AudioSettingsWidget.h"
+#include "UI/SettingWidget.h"
 #include "Settings/MazeUserSettings.h"
 #include "AudioDevice.h"
 #include "Sound/SoundMix.h"
@@ -267,7 +267,7 @@ void ATitlePlayerController::ToggleAudioSettings()
 
 	if (bAudioSettingsOpen)
 	{
-		AudioSettingsWidgetInstance = CreateWidget<UAudioSettingsWidget>(this, AudioSettingsWidgetClass);
+		AudioSettingsWidgetInstance = CreateWidget<USettingWidget>(this, AudioSettingsWidgetClass);
 		if (!AudioSettingsWidgetInstance)
 		{
 			bAudioSettingsOpen = false;

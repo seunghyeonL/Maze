@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerController/MazePlayerController.h"
-#include "UI/AudioSettingsWidget.h"
+#include "UI/SettingWidget.h"
 #include "Settings/MazeUserSettings.h"
 #include "AudioDevice.h"
 #include "Sound/SoundMix.h"
@@ -54,7 +54,7 @@ void AMazePlayerController::ToggleAudioSettings()
 
 	if (bAudioSettingsOpen)
 	{
-		AudioSettingsWidgetInstance = CreateWidget<UAudioSettingsWidget>(this, AudioSettingsWidgetClass);
+		AudioSettingsWidgetInstance = CreateWidget<USettingWidget>(this, AudioSettingsWidgetClass);
 		if (!AudioSettingsWidgetInstance)
 		{
 			bAudioSettingsOpen = false;

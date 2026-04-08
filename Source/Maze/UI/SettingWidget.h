@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "AudioSettingsWidget.generated.h"
+#include "SettingWidget.generated.h"
 
 class USlider;
 class UTextBlock;
@@ -20,7 +20,7 @@ DECLARE_DELEGATE(FOnExitToTitleRequested);
  * Master / BGM / SFX 3개 슬라이더 제공
  */
 UCLASS()
-class MAZE_API UAudioSettingsWidget : public UUserWidget
+class MAZE_API USettingWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
