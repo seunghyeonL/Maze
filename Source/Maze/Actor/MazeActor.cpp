@@ -86,29 +86,38 @@ void AMazeActor::PostEditMove(bool bFinished)
 
 void AMazeActor::EnforceTransformConstraints()
 {
-	bool bShowToast = false;
-	FText ToastText;
+	// 재진입 방지: SetActorRotation/SetActorScale3D 자체가 PostEditMove를 재귀 트리거하는 케이스 차단
+	// 효과 x 그 이유가 아닌듯 하다.
+	// if (bEnforcing) return;
+	// TGuardValue<bool> Guard(bEnforcing, true);
 
-	if (!GetActorRotation().Equals(FRotator::ZeroRotator))
+	const bool bRotViolation = !GetActorRotation().Equals(FRotator::ZeroRotator);
+	const bool bScaleViolation = !GetActorScale3D().Equals(FVector::OneVector);
+
+	if (bRotViolation)
 	{
 		SetActorRotation(FRotator::ZeroRotator);
-		ToastText = LOCTEXT("MazeActor_NoRotation", "MazeActor: 회전은 지원되지 않습니다. (월드축 기반 봇 패트롤 호환)");
-		bShowToast = true;
 	}
-
-	if (!GetActorScale3D().Equals(FVector::OneVector))
+	if (bScaleViolation)
 	{
 		SetActorScale3D(FVector::OneVector);
-		ToastText = LOCTEXT("MazeActor_NoScale", "MazeActor: 스케일은 지원되지 않습니다. (CellSize 사용)");
-		bShowToast = true;
 	}
 
-	if (bShowToast)
-	{
-		FNotificationInfo Info(ToastText);
-		Info.ExpireDuration = 3.f;
-		FSlateNotificationManager::Get().AddNotification(Info);
-	}
+	if (!bRotViolation && !bScaleViolation) return;
+
+	// Dedupe: 같은 사용자 액션에서 PostEditChangeProperty와 PostEditMove가 모두 호출돼
+	// 토스트가 두 번 뜨는 것을 방지 (복원은 위에서 매번 수행)
+	// 프로퍼티를 바꾸고 콜백중 값이 바뀌어도 바꾼 콜백으로 다시 적용되는 듯 하다. 
+	if (GFrameCounter == LastEnforceFrame) return;
+	LastEnforceFrame = GFrameCounter;
+
+	const FText ToastText = bRotViolation
+		? FText::FromString(TEXT("MazeActor: 회전은 지원되지 않습니다. (월드축 기반 봇 패트롤 호환)"))
+		: FText::FromString(TEXT("MazeActor: 스케일은 지원되지 않습니다. (CellSize 사용)"));
+	
+	FNotificationInfo Info(ToastText);
+	Info.ExpireDuration = 3.f;
+	FSlateNotificationManager::Get().AddNotification(Info);
 }
 
 void AMazeActor::DrawPreview()
@@ -138,16 +147,10 @@ void AMazeActor::DrawPreview()
 			const FVector CellLocal = LocalCellCenter(r, c, 0.f);
 			const FVector CellWorld = XForm.TransformPosition(CellLocal);
 			DrawDebugBox(World, CellWorld,
-				FVector(CellSize * 0.5f, CellSize * 0.5f, 10.f),
-				FColor::Green, true, -1.f, 0, 1.f);
+				FVector(CellSize * 0.5f, CellSize * 0.5f, CellSize * 0.5f),
+				FColor::Green, true, -1.f, 0, 4.f);
 		}
 	}
-
-	const FVector LabelLocal = LocalCenter + FVector(0.f, 0.f, 200.f);
-	const FVector LabelWorld = XForm.TransformPosition(LabelLocal);
-	DrawDebugString(World, LabelWorld,
-		FString::Printf(TEXT("Preview only (%dx%d)"), PreviewWidth, PreviewHeight),
-		nullptr, FColor::White, -1.f, true, 1.5f);
 }
 #endif // WITH_EDITOR
 

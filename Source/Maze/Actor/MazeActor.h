@@ -124,5 +124,8 @@ private:
 #if WITH_EDITOR
 	void EnforceTransformConstraints();
 	void DrawPreview();
+
+	uint64 LastEnforceFrame = (uint64)-1;
+	bool bEnforcing = false;
 #endif
 };
