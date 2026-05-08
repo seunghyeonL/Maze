@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
-#include "Helper/MazeGenerator.h"
+#include "Actor/MazeActor.h"
 #include "MazeGameMode.generated.h"
 
 class AMazeGameState;
@@ -80,5 +80,4 @@ private:
 	// Cached data for OnWallSpawnComplete callback
 	TArray<FCellRow> CachedGrid;
 	int32 CachedPlayerNum = 0;
-	float CachedCellSize = 500.f;
 };

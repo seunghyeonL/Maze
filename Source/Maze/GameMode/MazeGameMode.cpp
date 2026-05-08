@@ -5,7 +5,7 @@
 #include "GameState/MazeGameState.h"
 #include "GameSession/MazeGameSession.h"
 #include "../Actor/MazeTargetPoint.h"
-#include "Helper/MazeGenerator.h"
+#include "../Actor/MazeActor.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "EngineUtils.h"
@@ -125,43 +125,41 @@ void AMazeGameMode::GenerateAndSpawnMaze()
 		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: GameState is null"));
 		return;
 	}
-	
-	if (!GS->WallClass || !GoalActorClass)
+
+	AMazeActor* MazeActor = GS->GetMazeActor();
+	if (!MazeActor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: AMazeActor not placed in MazeLevel"));
+		return;
+	}
+
+	if (!MazeActor->GetWallClass() || !GoalActorClass)
 	{
 		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: WallClass/GoalActorClass not set in defaults!"));
 		return;
 	}
-	
+
 	TRACE_BOOKMARK(TEXT("MazeGameMode: GenerateAndSpawnMaze"));
-	
-	// 1. 시드 생성 (비제로 보장)
+
 	const int32 Seed = FMath::Rand() | 1;
-	
+
 	CachedPlayerNum = ArrivedPlayers.Num();
-	CachedCellSize = GS->CellSize;
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: GenerateMaze %dx%d Players=%d CellSize=%.0f Seed=%d"),
-		MazeWidth, MazeHeight, CachedPlayerNum, CachedCellSize, Seed);
-	
-	// 2. 그리드 생성 (결정론적)
+		MazeWidth, MazeHeight, CachedPlayerNum, MazeActor->GetCellSize(), Seed);
+
 	CachedGrid.Reset();
 	CachedGrid.SetNum(MazeHeight);
 	for (auto& Row : CachedGrid)
 	{
 		Row.Cells.SetNum(MazeWidth);
 	}
-	UMazeGenerator::BuildMazeGrid(MazeHeight, MazeWidth, Seed, CachedGrid);
-	
-	// 3. 클라이언트에 시드 전달 → OnRep_MazeSeed에서 클라이언트 벽 스폰 시작
+	AMazeActor::BuildMazeGrid(MazeHeight, MazeWidth, Seed, CachedGrid);
+
 	GS->SetMazeData(Seed, MazeWidth, MazeHeight);
-	
-	// 4. 서버: 지연 벽 스폰 → 완료 후 OnWallSpawnComplete 콜백
-	UMazeGenerator::SpawnWallsWithDelay(
-		this,
+
+	MazeActor->SpawnWallsWithDelay(
 		CachedGrid,
 		MazeHeight, MazeWidth,
-		CachedCellSize,
-		GS->WallClass,
-		GS->WallSpawnInterval,
 		FSimpleDelegate::CreateUObject(this, &AMazeGameMode::OnWallSpawnComplete));
 }
 
@@ -170,17 +168,21 @@ void AMazeGameMode::OnWallSpawnComplete()
 	AMazeGameState* GS = GetGameState<AMazeGameState>();
 	if (!GS) return;
 
+	AMazeActor* MazeActor = GS->GetMazeActor();
+	if (!MazeActor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MazeGameMode: MazeActor missing in OnWallSpawnComplete"));
+		return;
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("MazeGameMode: Wall spawn complete. Spawning gameplay actors..."));
 
-	// 게임플레이 액터 스폰 (서버 리플리케이트 — 골/봇/TargetPoint)
-	UMazeGenerator::SpawnGameplayActors(
-		this, CachedGrid,
+	MazeActor->SpawnGameplayActors(
+		CachedGrid,
 		MazeHeight, MazeWidth,
-		CachedCellSize,
 		CachedPlayerNum,
 		GoalActorClass, BotClass, BotCount);
 
-	// Grid 메모리 해제
 	CachedGrid.Reset();
 
 	// MazeTargetPoint 수집

@@ -1,8 +1,10 @@
 ﻿#include "MazeGameState.h"
+#include "Actor/MazeActor.h"
 #include "UI/MazeCountdownWidget.h"
 #include "UI/CommonModalWidget.h"
 #include "Net/UnrealNetwork.h"
 #include "Blueprint/UserWidget.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -145,29 +147,40 @@ void AMazeGameState::SetMazeData(int32 InSeed, int32 InWidth, int32 InHeight)
 
 void AMazeGameState::OnRep_MazeSeed()
 {
-    // Listen server guard — server already spawned walls in GenerateAndSpawnMaze
     if (HasAuthority()) return;
-    
+
     TRACE_BOOKMARK(TEXT("AMazeGameState::OnRep_MazeSeed"));
 
-    // Sentinel guard — ignore initial value (0) or invalid sizes
     if (MazeSeed == 0 || MazeWidth < 2 || MazeHeight < 2) return;
 
-    // Build grid (same seed → same grid guaranteed)
+    AMazeActor* MazeActor = GetMazeActor();
+    if (!MazeActor)
+    {
+        UE_LOG(LogTemp, Error, TEXT("MazeGameState: AMazeActor not placed in level"));
+        return;
+    }
+
     TArray<FCellRow> Grid;
     Grid.SetNum(MazeHeight);
     for (auto& Row : Grid)
     {
         Row.Cells.SetNum(MazeWidth);
     }
-    UMazeGenerator::BuildMazeGrid(MazeHeight, MazeWidth, MazeSeed, Grid);
+    AMazeActor::BuildMazeGrid(MazeHeight, MazeWidth, MazeSeed, Grid);
 
-    // Spawn walls locally (no replication — BP_MazeWall bReplicates=false assumed)
-    if (!WallClass)
+    MazeActor->SpawnWallsWithDelay(Grid, MazeHeight, MazeWidth);
+    UE_LOG(LogTemp, Log, TEXT("MazeGameState: Client spawning walls with delay (Seed=%d)"), MazeSeed);
+}
+
+AMazeActor* AMazeGameState::GetMazeActor()
+{
+    if (!CachedMazeActor)
     {
-        UE_LOG(LogTemp, Error, TEXT("MazeGameState: WallClass is null — cannot spawn walls on client"));
-        return;
+        for (TActorIterator<AMazeActor> It(GetWorld()); It; ++It)
+        {
+            CachedMazeActor = *It;
+            break;
+        }
     }
-    UMazeGenerator::SpawnWallsWithDelay(this, Grid, MazeHeight, MazeWidth, CellSize, WallClass, WallSpawnInterval);
-    UE_LOG(LogTemp, Log, TEXT("MazeGameState: Client spawning walls with delay (Seed=%d, Interval=%.3f)"), MazeSeed, WallSpawnInterval);
+    return CachedMazeActor;
 }
